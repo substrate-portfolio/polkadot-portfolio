@@ -10,6 +10,7 @@
 		"plugin:@typescript-eslint/recommended"
 	],
 	"rules": {
+		"@typescript-eslint/ban-ts-comment": "warn",
 		"indent": [
 			"error",
 			"tab"

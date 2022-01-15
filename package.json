@@ -13,26 +13,27 @@
 	"author": "@kianenigma",
 	"license": "ISC",
 	"devDependencies": {
-		"@babel/cli": "^7.16.0",
-		"@babel/core": "^7.16.0",
-		"@babel/preset-typescript": "^7.16.0",
+		"@babel/cli": "^7.16.8",
+		"@babel/core": "^7.16.7",
+		"@babel/preset-typescript": "^7.16.7",
 		"@types/currency-formatter": "^1.5.1",
-		"@types/node": "^16.11.6",
-		"@types/yargs": "^17.0.5",
-		"@typescript-eslint/eslint-plugin": "^5.3.0",
-		"@typescript-eslint/parser": "^5.3.0",
-		"eslint": "^8.2.0",
-		"nodemon": "^2.0.14",
-		"npm-check-updates": "12.0.0",
+		"@types/node": "^17.0.8",
+		"@types/yargs": "^17.0.8",
+		"@typescript-eslint/eslint-plugin": "^5.9.1",
+		"@typescript-eslint/parser": "^5.9.1",
+		"eslint": "^8.6.0",
+		"nodemon": "^2.0.15",
+		"npm-check-updates": "12.1.0",
 		"ts-loader": "^9.2.6",
 		"ts-node": "^10.4.0",
-		"typescript": "4.4.4"
+		"typescript": "4.5.4"
 	},
 	"dependencies": {
-		"@polkadot/api": "6.6.1",
+		"@polkadot/api": "7.3.1",
+		"moonbeam-types-bundle": "^2.0.2",
 		"axios": "^0.24.0",
 		"bn.js": "^5.2.0",
 		"currency-formatter": "^1.5.9",
-		"yargs": "^17.2.1"
+		"yargs": "^17.3.1"
 	}
 }

@@ -29,6 +29,4 @@ Karura, and Phala, and ideally it should work for all of them.
 
 # TODO
 
-- [ ] Moonriver
-- [ ] Summery at the end
 - [ ] ORML pallets

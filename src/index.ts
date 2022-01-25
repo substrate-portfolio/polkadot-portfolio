@@ -7,16 +7,64 @@ import { strict as assert } from "assert/strict";
 import axios from "axios";
 import * as currencyFormatter from "currency-formatter";
 import { readFileSync } from "fs";
+import { fetch_tokens } from "./acala"
+
+const SUBSTRATE_BASED_CHAINS = JSON.parse(readFileSync('accounts1.json').toString());
+export const api_registry: Map<string, ApiPromise> = new Map();
 
 
-interface Chain {
+/**
+ * Specification of a chain, as described in the JSON account file.
+ */
+interface ChainSpec {
 	chain: string,
 	overwrite_currency_name?: string,
 	stashes: [string, string],
 	pallets: string[]
 }
 
-class Asset {
+function into_summary(assets: Asset[]): ISummary {
+	const sum: Map<string, [Asset, number]> = new Map();
+	for (const asset of assets) {
+		if (!asset.amount.isZero()) {
+			if (sum.has(asset.token_name)) {
+				const [cumulative, _] = sum.get(asset.token_name) || [asset, 0];
+				cumulative.amount = cumulative.amount.add(asset.amount);
+				sum.set(asset.token_name, [cumulative, 0]);
+			} else {
+				const copy: Asset = new Asset({ ...asset });
+
+				sum.set(asset.token_name, [copy, 0]);
+			}
+		}
+	}
+
+	// compute sum of EUR-value in the entire map, and assign new ratio to each.
+	let sum_eur_value = new BN(0);
+	sum.forEach(([asset, _]) => sum_eur_value = sum_eur_value.add(asset.euro_value()))
+
+	for (const asset_id of sum.keys()) {
+		// just a wacky way to tell TS that the map def. contains `asset_id`:
+		// https://typescript-eslint.io/rules/no-non-null-assertion/
+		// https://linguinecode.com/post/how-to-solve-typescript-possibly-undefined-value
+		const [asset, _prev_raio] = sum.get(asset_id)!;
+		const new_ratio = asset.euro_value().toNumber() / sum_eur_value.toNumber();
+		sum.set(asset_id, [asset, new_ratio])
+	}
+
+	return { total_eur_value: sum_eur_value, sum }
+}
+
+function display_summary(summary: ISummary): string {
+	let ret = ""
+	for (const [_, [sum_asset, ratio]] of summary.sum.entries()) {
+		ret += `🎁 sum of ${sum_asset.token_name}: ${sum_asset.format_amount()}, ${(ratio * 100).toFixed(2)}% of total.\n`
+	}
+	ret += `💰 total EUR value: ${currencyFormatter.format(summary.total_eur_value.toNumber(), { locale: "nl-NL" })}\n`
+	return ret
+}
+
+export class Asset {
 	name: string;
 	token_name: string;
 	amount: BN;
@@ -40,14 +88,15 @@ class Asset {
 		return new BN(this.amount.div(new BN(10).pow(this.decimals)).toNumber() * this.price)
 	}
 
-	format_amount(api: ApiPromise):string {
-		const token_amount = this.is_native ? api.createType('Balance', this.amount).toHuman().toString() : `${this.amount.div(this.decimals).toString()} ${this.token_name}`;
+	format_amount():string {
+		const api = api_registry.get(this.token_name)!;
+		const token_amount = this.is_native ? api.createType('Balance', this.amount).toHuman().toString() : `${this.amount.div(new BN(10).pow(this.decimals)).toString()} ${this.token_name}`;
 		const eur_amount = this.euro_value().toNumber();
 		return `${token_amount} - ${currencyFormatter.format(eur_amount, { locale: "nl-NL" })}`
 	}
 
-	stringify(api: ApiPromise): string {
-		return `[${this.transferrable? '🍺': '🔐'}][${this.token_name}] ${this.name}: ${this.format_amount(api)}`
+	stringify(): string {
+		return `[${this.transferrable? '🍺': '🔐'}][${this.token_name}] ${this.name}: ${this.format_amount()}`
 	}
 }
 
@@ -61,7 +110,14 @@ interface IAsset {
 	decimals: BN,
 }
 
-class PerPallet {
+interface ISummary {
+	/// Mapping from asset-id, to a (cummulative) asset and the ratio of EUR-value that it
+	/// represents in this summary object.
+	sum: Map<string, [Asset, number]>,
+	total_eur_value: BN,
+}
+
+export class PerPallet {
 	name: string;
 	assets: Asset[];
 
@@ -73,13 +129,18 @@ class PerPallet {
 	has_any_value(): boolean {
 		return this.assets.filter((a) => !a.amount.isZero()).length > 0
 	}
+
+	into_summary(): ISummary {
+		return into_summary(this.assets)
+	}
 }
+
 interface IPerPallet {
 	name: string,
 	assets: Asset[]
 }
 
-class PerAccount {
+class PerAccount  {
 	id: string;
 	name: string;
 	pallets: PerPallet[];
@@ -93,6 +154,10 @@ class PerAccount {
 	has_any_value(): boolean {
 		return this.pallets.filter((t) => t.has_any_value()).length > 0
 	}
+
+	into_summary(): ISummary {
+		return into_summary(this.pallets.flatMap((p) => p.assets))
+	}
 }
 
 interface IPerAccount {
@@ -101,78 +166,40 @@ interface IPerAccount {
 	pallets: PerPallet[],
 }
 
-
 class PerChain {
 	name: string;
 	accounts: PerAccount[];
-	sum: Map<string, Asset>;
 
 	constructor(chain: IPerChain) {
 		this.name = chain.name;
 		this.accounts = chain.accounts;
-		this.sum = new Map();
 	}
 
-	display(api: ApiPromise) {
+	display() {
 		for (const account of this.accounts) {
 			if (!account.has_any_value()) { continue }
 			console.log(`🧾 Account: ${account.name} (${account.id})`)
 			for (const pallet of account.pallets) {
 				if (!pallet.has_any_value()) { continue }
-				if (pallet.assets.filter((a) => !a.amount.isZero()).length > 0) {
-					pallet.assets.sort((a, b) => a.amount.cmp(b.amount))
-
-				}
 				for (const asset of pallet.assets) {
 					if (!asset.amount.isZero()) {
-						console.log(`${asset.stringify(api)}`)
+						console.log(`${asset.stringify()}`)
 					}
 				}
 			}
 		}
 
-		console.log(this.asset_sum_display(api))
+		console.log(display_summary(this.into_summary()))
 	}
 
-	sum_up_assets() {
-		for (const account of this.accounts) {
-			if (!account.has_any_value()) { continue }
-			for (const pallet of account.pallets) {
-				if (!pallet.has_any_value()) { continue }
-				for (const asset of pallet.assets) {
-					if (!asset.amount.isZero()) {
-						this.register_asset_for_sum(asset);
-					}
-				}
-			}
-		}
-	}
-
-	register_asset_for_sum(asset: Asset) {
-		if (this.sum.has(asset.token_name)) {
-			const cumulative = this.sum.get(asset.token_name) || asset;
-			cumulative.amount = cumulative.amount.add(asset.amount);
-			this.sum.set(asset.token_name, cumulative);
-		} else {
-			const copy: Asset = new Asset( { ...asset } );
-			this.sum.set(asset.token_name, copy);
-		}
-	}
-
-	asset_sum_display(api: ApiPromise): string {
-		let ret = ""
-		for (const [_, sum_asset] of this.sum.entries()) {
-			ret += `🎁 sum of ${sum_asset.token_name}: ${sum_asset.format_amount(api)}\n`
-		}
-		return ret
+	into_summary(): ISummary {
+		return into_summary(this.accounts.flatMap((a) => a.pallets.flatMap((p) => p.assets)))
 	}
 }
 interface IPerChain {
 	name: string
 	accounts: PerAccount[]
 }
-
-const SUBSTRATE_BASED_CHAINS = JSON.parse(readFileSync('accounts.json').toString())
 
 async function price_of(token: string): Promise<number> {
 	try {
@@ -212,21 +239,31 @@ async function fetch_system(api: ApiPromise, account: string, token_name: string
 
 async function fetch_crowdloan(api: ApiPromise, account: string, token_name: string, price: number): Promise<PerPallet> {
 	const accountHex = api.createType('AccountId', account).toHex();
+	const decimals = new BN(api.registry.chainDecimals[0]);
 	// @ts-ignore
 	const allParaIds: ParaId[] = (await api.query.paras.paraLifecycles.entries()).map(([key, _]) => key.args[0]);
-	let sum = new BN(0);
+	const assets: Asset[] = [];
 	for (const id of allParaIds) {
 		const contribution = await api.derive.crowdloan.ownContributions(id, [accountHex])
 		if (contribution[accountHex]) {
 			const contribution_amount = contribution[accountHex];
 			if (!contribution_amount.isZero()) {
-				sum = sum.add(contribution_amount);
+				const asset = new Asset(
+					{
+						name: `crowdloan_${id}`,
+						token_name,
+						price,
+						transferrable: false,
+						amount: contribution_amount,
+						decimals,
+						is_native: true
+					}
+				);
+				assets.push(asset)
 			}
 		}
 	}
 
-	const decimals = new BN(api.registry.chainDecimals[0]);
-	const assets: Asset[] = [new Asset({ name: `crowdloan`, token_name, price, transferrable: false, amount: sum, decimals, is_native: true })]
 	return new PerPallet({ assets, name: "crowdloan" })
 }
 
@@ -240,7 +277,7 @@ async function fetch_crowdloan_rewards(api: ApiPromise, account: string, token_n
 	const locked = total.sub(claimed);
 
 	const decimals = new BN(api.registry.chainDecimals[0]);
-	return new PerPallet({ assets: [new Asset({ name: token_name, token_name, price, transferrable: false, amount: locked, decimals, is_native: true })], name: "crowdloanRewards" })
+	return new PerPallet({ assets: [new Asset({ name: "crowdloan rewards", token_name, price, transferrable: false, amount: locked, decimals, is_native: true })], name: "crowdloanRewards" })
 }
 
 async function fetch_assets(api: ApiPromise, account: string): Promise<PerPallet> {
@@ -262,24 +299,33 @@ async function fetch_assets(api: ApiPromise, account: string): Promise<PerPallet
 }
 
 async function main() {
-	const all: PerChain[] = [];
+	// initialize `api_registry`.
 	for (const uri in SUBSTRATE_BASED_CHAINS) {
-		// @ts-ignore
+		const {
+			chain,
+			overwrite_currency_name,
+		}: ChainSpec = SUBSTRATE_BASED_CHAINS[uri];
+		const provider = new WsProvider(uri);
+		const api = await ApiPromise.create({ provider });
+		const token_name = overwrite_currency_name ? overwrite_currency_name : chain.toLowerCase();
+		api_registry.set(token_name.toLowerCase(), api);
+	}
+
+
+	const all_chains: PerChain[] = [];
+	for (const uri in SUBSTRATE_BASED_CHAINS) {
 		const {
 			chain,
 			stashes,
 			overwrite_currency_name,
 			pallets,
-		}: Chain = SUBSTRATE_BASED_CHAINS[uri];
-		const provider = new WsProvider(uri);
-		// @ts-ignore
-		const api = await ApiPromise.create({ provider });
+		}: ChainSpec = SUBSTRATE_BASED_CHAINS[uri];
 		const token_name = overwrite_currency_name ? overwrite_currency_name : chain.toLowerCase();
+		const api = api_registry.get(token_name)!;
 		const price = await price_of(token_name);
 		const block_number = (await api.rpc.chain.getBlock()).block.header.number.toBn();
 
 		console.log(`✅ Connected to node: ${uri} / chain ${chain} / decimals: ${api.registry.chainDecimals.toString()} / tokens ${api.registry.chainTokens} / at #${block_number} [ss58: ${api.registry.chainSS58}][price €${price}]`);
-
 
 		const chain_accounts = [];
 		for (const [account, name] of stashes) {
@@ -291,6 +337,7 @@ async function main() {
 				per_account.pallets.push(system)
 			}
 
+			// moonbeam/moonriver
 			if (pallets.indexOf('crowdloanRewards') > -1 && api.query.crowdloanRewards ) {
 				const system = await fetch_crowdloan_rewards(api, account, token_name, price);
 				per_account.pallets.push(system)
@@ -313,24 +360,26 @@ async function main() {
 				per_account.pallets.push(assets);
 			}
 
+			// tokens
+			if (pallets.indexOf("tokens") > -1 && api.query.tokens) {
+				await fetch_tokens(api, account);
+			}
+
 			chain_accounts.push(per_account);
 		}
 
 		const chain_data = new PerChain({ accounts: chain_accounts, name: chain });
-		chain_data.sum_up_assets();
-		chain_data.display(api);
-		all.push(chain_data);
+		chain_data.display();
+		all_chains.push(chain_data);
 	}
 
-	let sum_eur = new BN(0);
-	for (const chain of all) {
-		for (const asset_sum of chain.sum.values()) {
-			sum_eur = sum_eur.add(asset_sum.euro_value());
-		}
-	}
+
+	// UI MISHE
+	const all_assets = all_chains.flatMap((chain) => chain.accounts.flatMap((account) => account.pallets.flatMap((pallet) => pallet.assets)));
+	const final_summary = into_summary(all_assets);
 
 	console.log(`#########`)
-	console.log(`# Portfolio sum: ${currencyFormatter.format(sum_eur.toNumber(), { locale: "nl-NL" })}`)
+	console.log(`# Final Summary:\n${display_summary(final_summary)}`)
 	console.log(`#########`)
 }
 

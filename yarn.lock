@@ -494,12 +494,26 @@
     memoizee "^0.4.15"
     rxjs "^7.2.0"
 
+"@open-web3/orml-type-definitions@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@open-web3/orml-type-definitions/-/orml-type-definitions-1.0.1.tgz#497a708ae658dd7c7fed024306c2a3015ebc7b4b"
+  integrity sha512-FGSeVaQv6DcQSa3E0YX20ymJpqtD8XJmLukCuC4AhVfSgLqT6roI2SfrRhUiYVbe1PQph7ptxx1EhEV/PNcnEw==
+  dependencies:
+    lodash.merge "^4.6.2"
+
 "@open-web3/orml-type-definitions@1.0.2-3", "@open-web3/orml-type-definitions@^1.0.2-0":
   version "1.0.2-3"
   resolved "https://registry.yarnpkg.com/@open-web3/orml-type-definitions/-/orml-type-definitions-1.0.2-3.tgz#14de7906ace3bee5764168e01d59162292a65a61"
   integrity sha512-1O6TFaDP0s/Bm3XI47+eBEx+wHQepIu9uS+rkAorbwLMhfEbYf082Y+JskvOR3cSljNIfP3Zo8bWm+v8Kta+zA==
   dependencies:
     lodash.merge "^4.6.2"
+
+"@open-web3/orml-types@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@open-web3/orml-types/-/orml-types-1.0.1.tgz#6eda4a358ebc40b397546a4f6ebd911200252907"
+  integrity sha512-A7XimIY15ZkgixvSPyBE7GXZW1XgH9TdCkKAEUXgpS6doerh4fiX1rqKjsqzjJjmJMiietg0asNJVVJ6iDF+3w==
+  dependencies:
+    "@open-web3/orml-type-definitions" "1.0.1"
 
 "@open-web3/orml-types@^1.0.2-0":
   version "1.0.2-3"

@@ -5,7 +5,7 @@ import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_vesting, fet
 import { PerAccount, PerChain, Summary } from "./types";
 import { price_of } from "./utils";
 
-export const SUBSTRATE_BASED_CHAINS = JSON.parse(readFileSync('accounts.json').toString());
+export const SUBSTRATE_BASED_CHAINS = JSON.parse(readFileSync('accounts1.json').toString());
 export const api_registry: Map<string, ApiPromise> = new Map();
 
 
@@ -77,7 +77,8 @@ async function main() {
 			}
 
 			if (api.query.tokens) {
-				await fetch_tokens(api, account);
+				const assets = await fetch_tokens(api, account);
+				per_account.pallets.push(assets);
 			}
 
 			chain_accounts.push(per_account);

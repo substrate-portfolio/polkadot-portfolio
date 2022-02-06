@@ -23,7 +23,7 @@ export async function fetch_system(api: ApiPromise, account: string, token_name:
 	const accountData = await api.query.system.account(account);
 	const decimals = new BN(api.registry.chainDecimals[0]);
 	const assets: Asset[] = [
-		new Asset({ name: `free`, token_name, price, transferrable: true, amount: accountData.data.free, decimals, is_native: true  }),
+		new Asset({ name: `free`, token_name, price, transferrable: true, amount: accountData.data.free, decimals, is_native: true }),
 		new Asset({ name: `reserved`, token_name, price, transferrable: false, amount: accountData.data.reserved, decimals, is_native: true })
 	];
 	return new PerPallet({ assets, name: "system" })
@@ -68,7 +68,7 @@ export async function fetch_assets(api: ApiPromise, account: string): Promise<Pe
 		if (!assetAccount.balance.isZero()) {
 			const meta = await api.query.assets.metadata(assetId);
 			const decimals = new BN(meta.decimals);
-			const name = (meta.symbol.toHuman() || "").toString().toLowerCase() ;
+			const name = (meta.symbol.toHuman() || "").toString().toLowerCase();
 			const price = await price_of(name);
 			assets.push(new Asset({ name, price, token_name: name, transferrable: Boolean(assetAccount.isFrozen), amount: assetAccount.balance, decimals, is_native: false }))
 		}

@@ -3,7 +3,7 @@ import '@polkadot/api-augment';
 import { readFileSync } from "fs";
 import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_vesting, fetch_crowdloan, fetch_assets,  } from "./fetch"
 import { PerAccount, PerChain, Summary } from "./types";
-import { price_of } from "./utils";
+import { priceOf } from "./utils";
 
 export const SUBSTRATE_BASED_CHAINS = JSON.parse(readFileSync('accounts1.json').toString());
 export const api_registry: Map<string, ApiPromise> = new Map();
@@ -42,7 +42,7 @@ async function main() {
 		}: ChainSpec = SUBSTRATE_BASED_CHAINS[uri];
 		const token_name = overwrite_currency_name ? overwrite_currency_name : chain.toLowerCase();
 		const api = api_registry.get(token_name)!;
-		const price = await price_of(token_name);
+		const price = await priceOf(token_name);
 		const block_number = (await api.rpc.chain.getBlock()).block.header.number.toBn();
 
 		const chain_accounts = [];

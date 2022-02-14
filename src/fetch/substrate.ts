@@ -2,7 +2,8 @@ import { ApiPromise } from "@polkadot/api";
 import BN from "bn.js";
 import { Asset, PerPallet } from "../types";
 import { strict as assert } from "assert/strict";
-import { price_of } from "../utils";
+import { priceOf } from "../utils";
+import { string } from "yargs";
 
 export async function fetch_vesting(api: ApiPromise, account: string, block_number: BN): Promise<PerPallet> {
 	const accountData = await api.query.system.account(account);
@@ -23,8 +24,8 @@ export async function fetch_system(api: ApiPromise, account: string, token_name:
 	const accountData = await api.query.system.account(account);
 	const decimals = new BN(api.registry.chainDecimals[0]);
 	const assets: Asset[] = [
-		new Asset({ name: `free`, token_name, price, transferrable: true, amount: accountData.data.free, decimals, is_native: true }),
-		new Asset({ name: `reserved`, token_name, price, transferrable: false, amount: accountData.data.reserved, decimals, is_native: true })
+		new Asset({ name: `free`, token_name, price, transferrable: true, amount: accountData.data.free, decimals }),
+		new Asset({ name: `reserved`, token_name, price, transferrable: false, amount: accountData.data.reserved, decimals })
 	];
 	return new PerPallet({ assets, name: "system" })
 }
@@ -48,7 +49,6 @@ export async function fetch_crowdloan(api: ApiPromise, account: string, token_na
 						transferrable: false,
 						amount: contribution_amount,
 						decimals,
-						is_native: true
 					}
 				);
 				assets.push(asset)
@@ -69,8 +69,8 @@ export async function fetch_assets(api: ApiPromise, account: string): Promise<Pe
 			const meta = await api.query.assets.metadata(assetId);
 			const decimals = new BN(meta.decimals);
 			const name = (meta.symbol.toHuman() || "").toString().toLowerCase();
-			const price = await price_of(name);
-			assets.push(new Asset({ name, price, token_name: name, transferrable: Boolean(assetAccount.isFrozen), amount: assetAccount.balance, decimals, is_native: false }))
+			const price = await priceOf(name);
+			assets.push(new Asset({ name, price, token_name: name, transferrable: Boolean(assetAccount.isFrozen), amount: assetAccount.balance, decimals, }))
 		}
 	}
 

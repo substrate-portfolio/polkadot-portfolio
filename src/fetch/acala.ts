@@ -4,6 +4,7 @@ import { CurrencyId, PoolId, DexShare } from "@acala-network/types/interfaces/"
 import {  } from "@open-web3/orml-types/interfaces"
 import { types } from "@acala-network/types"
 import BN from 'bn.js';
+import { findDecimals, priceOf } from '../utils';
 
 function currencyIdToTokenName(currencyId: CurrencyId): string {
 	if (currencyId.isDexShare) {
@@ -34,16 +35,14 @@ export async function fetch_tokens(api: ApiPromise, account: string): Promise<Pe
 	const entries = await api.query.tokens.accounts.entries(account);
 	for (const [key, token_data_raw] of entries) {
 		const token_type: CurrencyId = api.createType('CurrencyId', key.args[1].toU8a());
-		const token_data = api.createType('OrmlAccountData', token_data_raw)
+		const token_data = api.createType('OrmlAccountData', token_data_raw);
+		console.log(token_type.toHuman(), token_data.toHuman());
 		if (token_type.isToken) {
-			const token_name = token_type.asToken.toString();
+			// nada for now..
 		} else if (token_type.isForeignAsset) {
-			const foreign_asset_id = token_type.asForeignAsset.toNumber();
-			console.log(foreign_asset_id, token_data.toHuman());
 			assets.push(new Asset({
 				amount: token_data.free,
 				decimals: new BN(1),
-				is_native: false,
 				name: currencyIdToTokenName(token_type),
 				price: 0,
 				token_name: currencyIdToTokenName(token_type),
@@ -59,11 +58,10 @@ export async function fetch_tokens(api: ApiPromise, account: string): Promise<Pe
 		if (!amount.isZero()) {
 			assets.push(new Asset({
 				amount,
-				decimals: new BN(1),
-				is_native: false,
+				decimals: findDecimals(api, poolToTokenName(poolId)),
 				name: poolToTokenName(poolId),
 				token_name: poolToTokenName(poolId),
-				price: 0,
+				price: await priceOf(poolToTokenName(poolId)),
 				transferrable: true
 			}))
 		}

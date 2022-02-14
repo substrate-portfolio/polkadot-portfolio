@@ -13,5 +13,5 @@ export async function fetch_crowdloan_rewards(api: ApiPromise, account: string, 
 	const locked = total.sub(claimed);
 
 	const decimals = new BN(api.registry.chainDecimals[0]);
-	return new PerPallet({ assets: [new Asset({ name: "crowdloan rewards", token_name, price, transferrable: false, amount: locked, decimals, is_native: true })], name: "crowdloanRewards" })
+	return new PerPallet({ assets: [new Asset({ name: "crowdloan rewards", token_name, price, transferrable: false, amount: locked, decimals})], name: "crowdloanRewards" })
 }

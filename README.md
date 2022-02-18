@@ -2,8 +2,7 @@
 
 A CLI tool to find all your bags of tokens im the highly complicated world of Polkadot Ecosystem 🔴.
 
-
-https://user-images.githubusercontent.com/5588131/154768775-243b557c-3fac-4fa1-9300-ebaac2595d63.mov
+https://user-images.githubusercontent.com/5588131/154768918-c4985996-02b6-4def-a7f1-80c07c86a4e6.mov
 
 > Example execution from the below `example.json`.
 

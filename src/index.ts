@@ -4,10 +4,19 @@ import { readFileSync } from "fs";
 import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_vesting, fetch_crowdloan, fetch_assets,  } from "./fetch"
 import { PerAccount, PerChain, Summary } from "./types";
 import { priceOf } from "./utils";
+import yargs, { config } from 'yargs';
+import { hideBin } from "yargs/helpers"
 
-export const SUBSTRATE_BASED_CHAINS = JSON.parse(readFileSync('example.json').toString());
+const optionsPromise = yargs(hideBin(process.argv))
+	.option('accounts', {
+		alias: 'a',
+		type: 'string',
+		description: 'path to a JSON file with your accounts in it.',
+		required: true,
+	})
+	.argv
+
 export const api_registry: Map<string, ApiPromise> = new Map();
-
 
 /**
  * Specification of a chain, as described in the JSON account file.
@@ -19,10 +28,12 @@ interface ChainSpec {
 
 async function main() {
 	// initialize `api_registry`.
-	for (const uri in SUBSTRATE_BASED_CHAINS) {
+	const options = await optionsPromise;
+	const accountConfig = JSON.parse(readFileSync(options.accounts).toString());
+	for (const uri in accountConfig) {
 		const {
 			chain,
-		}: ChainSpec = SUBSTRATE_BASED_CHAINS[uri];
+		}: ChainSpec = accountConfig[uri];
 		const provider = new WsProvider(uri);
 		const api = await ApiPromise.create({ provider });
 		console.log(`✅ Connected to node: ${uri} / chain ${chain} / decimals: ${api.registry.chainDecimals.toString()} / tokens ${api.registry.chainTokens} / [ss58: ${api.registry.chainSS58}]`);
@@ -31,15 +42,15 @@ async function main() {
 
 
 	const all_chains: PerChain[] = [];
-	for (const uri in SUBSTRATE_BASED_CHAINS) {
+	for (const uri in accountConfig) {
 		const {
 			chain,
 			stashes,
-		}: ChainSpec = SUBSTRATE_BASED_CHAINS[uri];
+		}: ChainSpec = accountConfig[uri];
 		const api = api_registry.get(chain)!;
 		const nativeToken = api.registry.chainTokens[0];
 		const price = await priceOf(nativeToken);
-		const block_number = (await api.rpc.chain.getBlock()).block.header.number.toBn();
+
 
 		const chain_accounts = [];
 		for (const [account, name] of stashes) {

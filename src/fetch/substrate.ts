@@ -1,9 +1,9 @@
 import { ApiPromise } from "@polkadot/api";
+import { Option } from "@polkadot/types";
 import BN from "bn.js";
 import { Asset, PerPallet } from "../types";
 import { strict as assert } from "assert/strict";
 import { priceOf } from "../utils";
-import { string } from "yargs";
 
 export async function fetch_vesting(api: ApiPromise, account: string, block_number: BN): Promise<PerPallet> {
 	const accountData = await api.query.system.account(account);
@@ -36,7 +36,7 @@ export async function fetch_crowdloan(api: ApiPromise, account: string, token_na
 	// @ts-ignore
 	const allParaIds: ParaId[] = (await api.query.paras.paraLifecycles.entries()).map(([key, _]) => key.args[0]);
 	const assets: Asset[] = [];
-	for (const id of allParaIds) {
+	const fetchParaIdPromise = allParaIds.map(async (id) => {
 		const contribution = await api.derive.crowdloan.ownContributions(id, [accountHex])
 		if (contribution[accountHex]) {
 			const contribution_amount = contribution[accountHex];
@@ -54,7 +54,9 @@ export async function fetch_crowdloan(api: ApiPromise, account: string, token_na
 				assets.push(asset)
 			}
 		}
-	}
+	});
+
+	await Promise.all(fetchParaIdPromise);
 
 	return new PerPallet({ assets, name: "crowdloan" })
 }
@@ -62,17 +64,20 @@ export async function fetch_crowdloan(api: ApiPromise, account: string, token_na
 export async function fetch_assets(api: ApiPromise, account: string): Promise<PerPallet> {
 	const assets: Asset[] = [];
 	const allAssetIds = (await api.query.assets.asset.entries()).map((a) => a[0].args[0]);
-	for (const assetId of allAssetIds) {
+	const fetchAssetsPromise = allAssetIds.map(async (assetId) => {
 		// @ts-ignore
-		const assetAccount: PalletAssetsAssetAccount = await api.query.assets.account(assetId, account);
-		if (!assetAccount.balance.isZero()) {
+		const assetAccount: Option<PalletAssetsAssetAccount> = await api.query.assets.account(assetId, account);
+		if (assetAccount.isSome && !assetAccount.unwrap().balance.isZero()) {
 			const meta = await api.query.assets.metadata(assetId);
 			const decimals = new BN(meta.decimals);
-			const name = (meta.symbol.toHuman() || "").toString().toLowerCase();
+			const name = (meta.symbol.toHuman() || "").toString();
 			const price = await priceOf(name);
-			assets.push(new Asset({ name, price, token_name: name, transferrable: Boolean(assetAccount.isFrozen), amount: assetAccount.balance, decimals, }))
+			assets.push(new Asset({ name, price, token_name: name, transferrable: Boolean(assetAccount.unwrap().isFrozen), amount: assetAccount.unwrap().balance, decimals, }))
 		}
-	}
+	});
+
+	await Promise.all(fetchAssetsPromise);
+
 
 	return new PerPallet({ assets, name: "assets" })
 }

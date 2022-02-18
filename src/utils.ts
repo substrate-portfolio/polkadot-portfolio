@@ -8,12 +8,18 @@ import BN from "bn.js";
 const COIN_CHAIN_MAP: Map<string, string> = new Map(
 	[
 		["ksm", "kusama"],
-		["kar", "karura"]
+		["kar", "karura"],
+		["astr", "astar"],
+		["dot", "polkadot"],
+		["movr", "moonriver"],
+		["glmr", "moonbeam"],
+		["aca", "acala"],
+		["para", "parallel"]
 	]
 )
 
 export async function priceOf(token: string): Promise<number> {
-	const tokenTransformed = COIN_CHAIN_MAP.has(token.toLowerCase()) ? COIN_CHAIN_MAP.get(token.toLowerCase()) : token;
+	const tokenTransformed = COIN_CHAIN_MAP.has(token.toLowerCase()) ? COIN_CHAIN_MAP.get(token.toLowerCase()) : token.toLowerCase();
 	try {
 		const data = await axios.get(`https://api.coingecko.com/api/v3/coins/${tokenTransformed}`);
 		const price = data.data['market_data']['current_price']['eur'];

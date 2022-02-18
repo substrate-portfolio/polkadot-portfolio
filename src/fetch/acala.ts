@@ -1,7 +1,7 @@
 import { ApiPromise } from '@polkadot/api';
 import { Asset, PerPallet, } from '../types';
-import { CurrencyId, PoolId, DexShare } from "@acala-network/types/interfaces/"
-import {  } from "@open-web3/orml-types/interfaces"
+import { CurrencyId, PoolId } from "@acala-network/types/interfaces/"
+import {} from "@open-web3/orml-types/interfaces/"
 import { types } from "@acala-network/types"
 import BN from 'bn.js';
 import { findDecimals, priceOf } from '../utils';
@@ -36,16 +36,17 @@ export async function fetch_tokens(api: ApiPromise, account: string): Promise<Pe
 	for (const [key, token_data_raw] of entries) {
 		const token_type: CurrencyId = api.createType('CurrencyId', key.args[1].toU8a());
 		const token_data = api.createType('OrmlAccountData', token_data_raw);
-		console.log(token_type.toHuman(), token_data.toHuman());
 		if (token_type.isToken) {
 			// nada for now..
 		} else if (token_type.isForeignAsset) {
+			const assetMetadata = (await api.query.assetRegistry.assetMetadatas({ 'ForeignAssetId': token_type.asForeignAsset })).unwrap();
+			const price = await priceOf(assetMetadata.toHuman().name.toLowerCase());
 			assets.push(new Asset({
 				amount: token_data.free,
-				decimals: new BN(1),
+				decimals: new BN(assetMetadata.decimals),
 				name: currencyIdToTokenName(token_type),
-				price: 0,
-				token_name: currencyIdToTokenName(token_type),
+				price,
+				token_name: assetMetadata.toHuman().name,
 				transferrable: true
 			}))
 		}

@@ -4,7 +4,7 @@ import { api_registry } from ".";
 
 export class Summary {
 	assets: Map<string, [Asset, number]>;
-	total_eur_value: BN;
+	total_eur_value: number;
 
 	constructor(input_assets: Asset[]) {
 		const assets: Map<string, [Asset, number]> = new Map();
@@ -23,15 +23,15 @@ export class Summary {
 		}
 
 		// compute sum of EUR-value in the entire map, and assign new ratio to each.
-		let total_eur_value = new BN(0);
-		assets.forEach(([asset, _]) => total_eur_value = total_eur_value.add(asset.euro_value()))
+		let total_eur_value = 0;
+		assets.forEach(([asset, _]) => total_eur_value = total_eur_value + asset.euroValue())
 
 		for (const asset_id of assets.keys()) {
 			// just a wacky way to tell TS that the map def. contains `asset_id`:
 			// https://typescript-eslint.io/rules/no-non-null-assertion/
 			// https://linguinecode.com/post/how-to-solve-typescript-possibly-undefined-value
 			const [asset, _prev_raio] = assets.get(asset_id)!;
-			const new_ratio = asset.euro_value().toNumber() / total_eur_value.toNumber();
+			const new_ratio = asset.euroValue() / total_eur_value;
 			assets.set(asset_id, [asset, new_ratio])
 		}
 
@@ -44,7 +44,7 @@ export class Summary {
 		for (const [_, [sum_asset, ratio]] of this.assets.entries()) {
 			ret += `🎁 sum of ${sum_asset.token_name}: ${sum_asset.format_amount()}, ${(ratio * 100).toFixed(2)}% of total.\n`
 		}
-		ret += `💰 total EUR value: ${currencyFormatter.format(this.total_eur_value.toNumber(), { locale: "nl-NL" })}\n`
+		ret += `💰 total EUR value: ${currencyFormatter.format(this.total_eur_value, { locale: "nl-NL" })}\n`
 		return ret
 	}
 }
@@ -68,15 +68,26 @@ export class Asset {
 		this.decimals = asset.decimals;
 	}
 
-	euro_value(): BN {
-		return new BN(this.amount.div(new BN(10).pow(this.decimals)).toNumber() * this.price)
+	decimalAmount(): BN {
+		return this.amount.div(new BN(10).pow(this.decimals))
+	}
+
+	perThousandsFraction(): BN {
+		return this.amount.div(new BN(10).pow(this.decimals.sub(new BN(3)))).mod(new BN(1000))
+	}
+
+	euroValue(): number {
+		if (this.price === 0) { return 0; }
+		const d = new BN(1000);
+		const scaledValue = this.amount.mul(d).div(new BN(10).pow(this.decimals)).toNumber();
+		return (scaledValue * this.price) / 1000
 	}
 
 	format_amount(): string {
 		const formatNumber = (x: BN) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-		const token_amount = `${formatNumber(this.amount.div(new BN(10).pow(this.decimals)))} ${this.token_name}`
-		const eur_amount = this.euro_value().toNumber();
+		const token_amount = `${formatNumber(this.decimalAmount())}.${this.perThousandsFraction().toString().padStart(3, '0')} ${this.token_name}`
+		const eur_amount = this.euroValue();
 		return `${token_amount} - ${currencyFormatter.format(eur_amount, { locale: "nl-NL" })}`
 	}
 

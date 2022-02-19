@@ -1,7 +1,7 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import '@polkadot/api-augment';
 import { readFileSync } from "fs";
-import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_vesting, fetch_crowdloan, fetch_assets,  } from "./fetch"
+import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_vesting, fetch_crowdloan, fetch_assets, fetch_reward_pools,  } from "./fetch"
 import { PerAccount, PerChain, Summary } from "./types";
 import { priceOf } from "./utils";
 import yargs, { config } from 'yargs';
@@ -82,6 +82,10 @@ async function main() {
 
 			if (api.query.tokens) {
 				const assets = await fetch_tokens(api, account);
+				per_account.pallets.push(assets);
+			}
+			if (api.query.rewards) {
+				const assets = await fetch_reward_pools(api, account);
 				per_account.pallets.push(assets);
 			}
 

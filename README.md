@@ -19,7 +19,7 @@ pallets.
 Lastly. for most newly launching parachain, if they only use basic pallets like `frame_system`, they
 can be supported with no additional effort.
 
-The program needs to be configured a config file, like `example.json` as a command line argument. 
+The program needs to be configured a config file, like `example.json` as a command line argument.
 
 
 
@@ -27,21 +27,18 @@ The program needs to be configured a config file, like `example.json` as a comma
 ```
 {
 	"wss://karura-rpc-0.aca-api.network": {
-		"chain": "karura",
 		"stashes": [
 			["rcUEwGx4TfAcwtsThSJcpY1shzUfHSMfqV4jULZEgge3uYD", "account1"]
 		]
 	},
 
 	"wss://statemine-rpc.polkadot.io": {
-		"chain": "statemine",
 		"stashes": [
 			["HKKT5DjFaUE339m7ZWS2yutjecbUpBcDQZHw2EF7SFqSFJH", "RMRK-MultiSIG"]
 		]
 	},
 
 	"wss://kusama-rpc.polkadot.io": {
-		"chain": "kusama",
 		"stashes": [
 			["HL8bEp8YicBdrUmJocCAWVLKUaR2dd1y6jnD934pbre3un1", "ksm-ctrl"],
 			["Eqm6aUjJDEWGAPfvFNpQcDgTSL44SuTCo1uFX7RwBwic74h", "ksm-2"]
@@ -49,14 +46,12 @@ The program needs to be configured a config file, like `example.json` as a comma
 	},
 
 	"wss://wss.api.moonbeam.network": {
-		"chain": "moonbeam",
 		"stashes": [
 			["0x8E9D48d936768237D6aD9378026bF4Bc7ECBC4bc", "eth"]
 		]
 	},
 
 	"wss://rpc.polkadot.io": {
-		"chain": "polkadot",
 		"stashes": [
 			["16FH7GKMqRY6QSYFF1doUL5D9uYwhbNd7rkuu6hAtDDTnbzE", "account1"],
 			["Cb2QccEAM38pjwmcHHTTuTukUobTHwhakKH4kBo4k8Vur8o", "account2"]
@@ -65,4 +60,4 @@ The program needs to be configured a config file, like `example.json` as a comma
 }
 ```
 
-Once you have assets in any new chain, you simply need to tweak this file with that chain's websocket endpoint, and your accounts in that chain. 
+Once you have assets in any new chain, you simply need to tweak this file with that chain's websocket endpoint, and your accounts in that chain.

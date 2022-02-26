@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import * as currencyFormatter from "currency-formatter";
-import { api_registry } from ".";
+import { apiRegistry } from ".";
 
 export class Summary {
 	assets: Map<string, [Asset, number]>;

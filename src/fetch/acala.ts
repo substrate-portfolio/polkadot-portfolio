@@ -1,6 +1,6 @@
 import { ApiPromise } from '@polkadot/api';
 import { Asset, PerPallet, } from '../types';
-import { CurrencyId, PoolId,  } from "@acala-network/types/interfaces/"
+import { CurrencyId, PoolId, DexShare  } from "@acala-network/types/interfaces/"
 import { OrmlAccountData } from "@open-web3/orml-types/interfaces/"
 import { types } from "@acala-network/types"
 import BN from 'bn.js';

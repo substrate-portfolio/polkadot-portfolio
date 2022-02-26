@@ -14,7 +14,8 @@ const COIN_CHAIN_MAP: Map<string, string> = new Map(
 		["movr", "moonriver"],
 		["glmr", "moonbeam"],
 		["aca", "acala"],
-		["para", "parallel"]
+		["para", "parallel"],
+		["azero", "aleph-zero"]
 	]
 )
 

@@ -30,7 +30,7 @@
 		"typescript-formatter": "^7.2.2"
 	},
 	"dependencies": {
-		"@acala-network/api": "^4.0.1",
+		"@acala-network/api": "4.0.1@beta",
 		"@open-web3/orml-types": "^1.0.1",
 		"@polkadot/api": "^7.1.2",
 		"axios": "^0.24.0",

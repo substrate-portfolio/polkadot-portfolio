@@ -1,17 +1,24 @@
 import { ApiPromise } from '@polkadot/api';
+import {  IndividualExposure } from '@polkadot/types/interfaces';
 import { Asset, PerPallet, } from '../types';
-import { CurrencyId, PoolId, DexShare  } from "@acala-network/types/interfaces/"
+import { CurrencyId, PoolId } from "@acala-network/types/interfaces/"
 import { OrmlAccountData } from "@open-web3/orml-types/interfaces/"
 import { types } from "@acala-network/types"
 import BN from 'bn.js';
 import { findDecimals, priceOf } from '../utils';
 
-function currencyIdToTokenName(currencyId: CurrencyId): string {
+function formatCurrencyId(currencyId: CurrencyId): string {
 	if (currencyId.isDexShare) {
-		return `LP ${currencyId.asDexShare.map((t) => t.isToken? t.asToken.toString() : "UNKNOWN_CURRENCY").join('-')}`;
+		// TODO: this seems like mistake in acala types?
+		const p0 = currencyId.asDexShare[0] as CurrencyId;
+		const p1 = currencyId.asDexShare[1] as CurrencyId;
+		return `LP ${formatCurrencyId(p0)}-${formatCurrencyId(p1)}`;
 	} else if (currencyId.isForeignAsset) {
 		return `foreignAsset${currencyId.asForeignAsset}`
-	} else if (currencyId.isToken) {
+	} else if (currencyId.isLiquidCroadloan) {
+		return `LC-${currencyId.asLiquidCroadloan}`
+	}
+	else if (currencyId.isToken) {
 		return currencyId.asToken.toString()
 	} else {
 		return "UNKNOWN_CURRENCY"
@@ -20,9 +27,9 @@ function currencyIdToTokenName(currencyId: CurrencyId): string {
 
 function poolToTokenName(pool: PoolId): string {
 	if (pool.isDex) {
-		return currencyIdToTokenName(pool.asDex);
+		return formatCurrencyId(pool.asDex);
 	} else if (pool.isLoans) {
-		return currencyIdToTokenName(pool.asLoans);
+		return formatCurrencyId(pool.asLoans);
 	} else {
 		return "UNKNOWN_POOL"
 	}
@@ -36,7 +43,7 @@ async function processToken(api: ApiPromise, token: CurrencyId, accountData: Orm
 		return new Asset({
 			amount: accountData.free,
 			decimals,
-			name: currencyIdToTokenName(token),
+			name: formatCurrencyId(token),
 			price,
 			token_name: tokenName,
 			transferrable: true
@@ -47,7 +54,7 @@ async function processToken(api: ApiPromise, token: CurrencyId, accountData: Orm
 		return new Asset({
 			amount: accountData.free,
 			decimals: new BN(assetMetadata.decimals),
-			name: currencyIdToTokenName(token),
+			name: formatCurrencyId(token),
 			price,
 			token_name: assetMetadata.toHuman().name,
 			transferrable: true
@@ -65,18 +72,18 @@ export async function fetch_reward_pools(api: ApiPromise, account: string): Prom
 	for (const poolId of allPoolIds) {
 		const [amount, rewardsMap] = await api.query.rewards.sharesAndWithdrawnRewards(poolId, account);
 		if (!amount.isZero()) {
+			const poolName = poolToTokenName(poolId);
 			assets.push(new Asset({
 				amount,
-				decimals: findDecimals(api, poolToTokenName(poolId)),
-				name: poolToTokenName(poolId),
-				token_name: poolToTokenName(poolId),
-				price: await priceOf(poolToTokenName(poolId)),
+				decimals: findDecimals(api, poolName),
+				name: poolName,
+				token_name: poolName,
+				price: await priceOf(poolName),
 				transferrable: true
 			}))
 
 		}
 	}
-
 
 	return new PerPallet({ assets, name: "rewardPools" })
 }

@@ -5,7 +5,6 @@ import { Asset, PerPallet } from "../types";
 
 export async function fetch_crowdloan_rewards(api: ApiPromise, account: string, token_name: string, price: number): Promise<PerPallet> {
 	// really wacky way of decoding shit...
-	// @ts-ignore
 	const [_, total, claimed, _dont_care] = api.createType(
 		'(U8, Balance, Balance, Vec<AccountId32>)',
 		(await api.query.crowdloanRewards.accountsPayable(account)).toU8a(),

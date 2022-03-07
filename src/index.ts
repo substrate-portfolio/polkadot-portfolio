@@ -30,15 +30,14 @@ async function main() {
 	// initialize `apiRegistry`.
 	const options = await optionsPromise;
 	const accountConfig = JSON.parse(readFileSync(options.accounts).toString());
-	for (const uri in accountConfig) {
+	await Promise.all(Object.keys(accountConfig).map(async (uri: string) => {
 		const provider = new WsProvider(uri);
 		const api = await ApiPromise.create({ provider });
 		const chain = (await api.rpc.system.chain()).toString();
 		console.log(`✅ Connected to chain ${chain} / node: ${uri} / decimals: ${api.registry.chainDecimals.toString()} / tokens ${api.registry.chainTokens} / [ss58: ${api.registry.chainSS58}]`);
 		accountConfig[uri]["chain"] = chain.toLocaleLowerCase();
 		apiRegistry.set(chain.toLocaleLowerCase(), api);
-	}
-
+	}));
 
 	const all_chains: PerChain[] = [];
 	for (const uri in accountConfig) {

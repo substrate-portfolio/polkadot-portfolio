@@ -1,5 +1,4 @@
 import { ApiPromise } from '@polkadot/api';
-import {  IndividualExposure } from '@polkadot/types/interfaces';
 import { Asset, PerPallet, } from '../types';
 import { CurrencyId, PoolId } from "@acala-network/types/interfaces/"
 import { OrmlAccountData } from "@open-web3/orml-types/interfaces/"

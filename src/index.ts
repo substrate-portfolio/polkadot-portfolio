@@ -6,7 +6,6 @@ import { PerAccount, PerChain, Summary } from "./types";
 import { priceOf } from "./utils";
 import yargs from 'yargs';
 import { hideBin } from "yargs/helpers"
-import BN from "bn.js";
 
 const optionsPromise = yargs(hideBin(process.argv))
 	.option('accounts', {
@@ -64,7 +63,8 @@ async function scrapeAccountFunds(account: string, name: string, nativeToken: st
 			perAccount.pallets.push(assets);
 		}
 	} catch(e) {
-		// console.error(`error while fetching ${account}/${name} in network ${networkWs}`)
+		console.error(`error while fetching ${account}/${name} on ${nativeToken}: ${e}`);
+		throw(e)
 	}
 
 	return perAccount

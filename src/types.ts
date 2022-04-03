@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import * as currencyFormatter from "currency-formatter";
-import { apiRegistry } from ".";
+import { createBrotliCompress } from "zlib";
 
 export class Summary {
 	assets: Map<string, [Asset, number]>;
@@ -85,8 +85,7 @@ export class Asset {
 
 	format_amount(): string {
 		const formatNumber = (x: BN) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-
-		const token_amount = `${formatNumber(this.decimalAmount())}.${this.perThousandsFraction().toString().padStart(3, '0')} ${this.token_name}`
+		const token_amount = `${formatNumber(this.decimalAmount())}.${this.perThousandsFraction().toString().padStart(3, '0')}`
 		const eur_amount = this.euroValue();
 		return `${token_amount} - ${currencyFormatter.format(eur_amount, { locale: "nl-NL" })}`
 	}

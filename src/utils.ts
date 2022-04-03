@@ -19,6 +19,8 @@ const COIN_CHAIN_MAP: Map<string, string> = new Map(
 	]
 )
 
+const PRICE_CACHE: Map<string, number> = new Map();
+
 export async function priceOf(token: string): Promise<number> {
 	const tokenTransformed = COIN_CHAIN_MAP.has(token.toLowerCase()) ? COIN_CHAIN_MAP.get(token.toLowerCase()) : token.toLowerCase();
 	try {

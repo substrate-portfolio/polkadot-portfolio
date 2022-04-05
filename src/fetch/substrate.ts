@@ -1,3 +1,4 @@
+import '@polkadot/api-augment/substrate';
 import { ApiPromise } from "@polkadot/api";
 import { Option } from "@polkadot/types";
 import BN from "bn.js";

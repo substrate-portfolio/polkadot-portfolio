@@ -1,12 +1,10 @@
 import { ApiPromise } from '@polkadot/api';
-import { u128 } from '@polkadot/types';
 import { Asset, PerPallet, } from '../types';
 import { CurrencyId, PoolId, TradingPair } from "@acala-network/types/interfaces/"
 import { OrmlAccountData } from "@open-web3/orml-types/interfaces/"
 import { types } from "@acala-network/types"
 import BN from 'bn.js';
 import { findDecimals, priceOf } from '../utils';
-import { apiRegistry } from '..';
 
 // find the price of an asset by looking into its dex value, when converted into another one. This
 // is useful to fund the price of something like LKSM, LC-DOT or LDOT. It takes `amount` of

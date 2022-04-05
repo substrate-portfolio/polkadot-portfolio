@@ -1,11 +1,28 @@
+import "@polkadot/api-augment";
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import '@polkadot/api-augment';
 import { readFileSync } from "fs";
 import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_crowdloan, fetch_assets, fetch_reward_pools,  } from "./fetch"
-import { PerAccount, PerChain, Summary } from "./types";
+import { PerAccount, PerChain, PerPallet, Summary } from "./types";
 import { priceOf } from "./utils";
 import yargs from 'yargs';
 import { hideBin } from "yargs/helpers"
+import BN from 'bn.js';
+
+
+export async function fetch_vesting_2(api: ApiPromise, account: string, block_number: BN): Promise<PerPallet> {
+	const accountData = await api.query.system.account(account);
+	const vesting = (await api.query.vesting.vesting(account)).unwrapOrDefault();
+	const totalBalance = accountData.data.free.add(accountData.data.reserved);
+	assert.ok(vesting.length <= 1);
+	if (vesting.length === 1) {
+		const schedule = vesting[0];
+		const nonVested = totalBalance.sub(schedule.locked);
+		const madeFree = (block_number.sub(schedule.startingBlock)).mul(schedule.perBlock);
+		const leftVesting = schedule.locked.sub(madeFree);
+	}
+
+	return new PerPallet({ assets: [], name: "vesting" })
+}
 
 const optionsPromise = yargs(hideBin(process.argv))
 	.option('accounts', {

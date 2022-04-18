@@ -4,11 +4,13 @@
 	"description": "A template project to kickstart hacking on top of @polkadot/api",
 	"main": "index.js",
 	"scripts": {
+		"postinstall": "cd ui && npm install",
 		"dev": "./node_modules/.bin/nodemon --exec ./node_modules/.bin/ts-node ./src/index.ts",
 		"start": "./node_modules/.bin/ts-node ./src/index.ts",
+		"start-ui": "cd ui && npm start",
 		"update": "././node_modules/.bin/ncu -u && yarn",
 		"lint": "eslint . --ext .ts --fix",
-		"build": "./node_modules/.bin/tsc --pretty"
+		"build": "./node_modules/.bin/tsc --pretty && cd ui && npm run build"
 	},
 	"author": "@kianenigma",
 	"license": "ISC",
@@ -30,8 +32,9 @@
 		"typescript-formatter": "^7.2.2"
 	},
 	"dependencies": {
-		"@polkadot/api": "^7.1.1",
 		"@acala-network/types": "4.0.1",
+		"@open-web3/orml-types": "^1.1.3",
+		"@polkadot/api": "^7.1.1",
 		"axios": "^0.26.1",
 		"bn.js": "^5.2.0",
 		"currency-formatter": "^1.5.9",

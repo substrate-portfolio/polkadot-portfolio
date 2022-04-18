@@ -1,27 +1,57 @@
 import { ApiPromise } from '@polkadot/api';
 import { Asset, PerPallet, } from '../types';
-import { CurrencyId, PoolId, TradingPair } from "@acala-network/types/interfaces/"
+import { CurrencyId, PoolId, TradingPair, DexShare } from "@acala-network/types/interfaces/"
 import { OrmlAccountData } from "@open-web3/orml-types/interfaces/"
 import { types } from "@acala-network/types"
 import BN from 'bn.js';
 import { findDecimals, priceOf } from '../utils';
 
+async function findPriceOrCheckDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<number> {
+	const normal = await priceOf(formatCurrencyId(x));
+	if (normal > 0) {
+		return normal
+	} else {
+		return await findPriceViaDex(api, x, y)
+	}
+}
+
+const PRICE_CACHE: Map<string, number> = new Map();
+
 // find the price of an asset by looking into its dex value, when converted into another one. This
 // is useful to fund the price of something like LKSM, LC-DOT or LDOT. It takes `amount` of
-// `unknonw` and returns
-async function findPriceViaDex(api: ApiPromise, unknown: CurrencyId, unknownAmount: BN, known: CurrencyId): Promise<number> {
-	const [knownTotal, unknownTotal] = await api.query.dex.liquidityPool([known, unknown]);
-	if (unknownTotal.isZero()) {
+// `unknown` and returns
+async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<number> {
+	if (PRICE_CACHE.has(formatCurrencyId(x)))  {
+		return PRICE_CACHE.get(formatCurrencyId(x))!
+	}
+
+	const [xTotal, yTotal] = await dexLiquidityOf(api, x, y);
+	if (xTotal.isZero() || yTotal.isZero()) {
+		console.log(`⛔️ failed to get price of ${x.toString()} via ${y.toString()}. Does a pool for them exist?`)
 		return 0
 	}
-	const knownAmount = unknownAmount.mul(knownTotal).div(unknownTotal);
-	const knownPrice = new BN(await priceOf(formatCurrencyId(known)));
-	return knownAmount.mul(knownPrice).div(unknownAmount).toNumber()
+
+	// now get the price of `y`, then known token..
+	const MUL = 10000;
+	const yPrice = new BN(await priceOf(formatCurrencyId(y)) * MUL);
+	console.log(`price of ${x.toString()} via ${y.toString()} is ${yTotal.mul(yPrice).div(xTotal).toNumber() / MUL}`)
+	const price = yTotal.mul(yPrice).div(xTotal).toNumber() / MUL;
+	PRICE_CACHE.set(formatCurrencyId(x), price);
+	return price
+}
+
+async function dexLiquidityOf(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<[BN, BN]> {
+	let [yTotal, xTotal]: [BN, BN] = [new BN(0), new BN(0)];
+	try {
+		[yTotal, xTotal] = await api.query.dex.liquidityPool([y.toHuman(), x.toHuman()])
+	} catch {
+		[xTotal, yTotal] = await api.query.dex.liquidityPool([x.toHuman(), y.toHuman()]);
+	}
+	return [xTotal, yTotal]
 }
 
 function formatCurrencyId(currencyId: CurrencyId): string {
 	if (currencyId.isDexShare) {
-		// TODO: this seems like mistake in acala types?
 		const p0 = currencyId.asDexShare[0] as CurrencyId;
 		const p1 = currencyId.asDexShare[1] as CurrencyId;
 		return `LP ${formatCurrencyId(p0)}-${formatCurrencyId(p1)}`;
@@ -29,10 +59,24 @@ function formatCurrencyId(currencyId: CurrencyId): string {
 		return `foreignAsset${currencyId.asForeignAsset}`
 	} else if (currencyId.isLiquidCroadloan) {
 		return `LC-${currencyId.asLiquidCroadloan}`
+		//@ts-ignore
+	} else if (currencyId.isLiquidCrowdloan) {
+		//@ts-ignore
+		return `LC-${currencyId.asLiquidCrowdloan}`
 	} else if (currencyId.isToken) {
 		return `${currencyId.asToken.toString()}`
 	} else {
 		return "UNKNOWN_CURRENCY"
+	}
+}
+
+function formatDexShare(share: DexShare): string {
+	if (share.isToken) {
+		return share.asToken.toString()
+	} else if (share.isErc20) {
+		return `ERC20-${share.asErc20}`
+	} else {
+		return `UNKNOWN_DEX_SHARE`
 	}
 }
 
@@ -59,8 +103,8 @@ function poolToName(pool: PoolId): string {
 async function processToken(api: ApiPromise, token: CurrencyId, accountData: OrmlAccountData): Promise<Asset | undefined> {
 	if (token.isToken) {
 		const tokenName = token.asToken.toString();
-		const KnownToken = api.createType('CurrencyId', { 'Token': 'KSM' });
-		const price = Math.max(await priceOf(tokenName), await findPriceViaDex(api, token, accountData.free, KnownToken));
+		const knownToken = api.createType('CurrencyId', { 'Token': api.registry.chainTokens[0] });
+		const price = await findPriceOrCheckDex(api, token, knownToken);
 		const decimals = findDecimals(api, tokenName);
 		return new Asset({
 			amount: accountData.free,
@@ -100,30 +144,40 @@ export async function fetch_reward_pools(api: ApiPromise, account: string): Prom
 			// if this is an LP pool, we register each individual asset independently as well. note
 			// that we also register the LP token, which will always have a value of zero.
 			if (poolId.isDex && poolId.asDex.isDexShare) {
-				const p0 = poolId.asDex.asDexShare[0] as CurrencyId;
-				const p1 = poolId.asDex.asDexShare[1] as CurrencyId;
+				const p0: CurrencyId = poolId.asDex.asDexShare[0] as CurrencyId;
+				const p1: CurrencyId = poolId.asDex.asDexShare[1] as CurrencyId;
+
 				const poolTotalShares = (await api.query.rewards.poolInfos(poolId)).totalShares;
-				const poolCurrentShares = await api.query.dex.liquidityPool([p0, p1]);
+
+				let poolCurrentShares;
+				try {
+					poolCurrentShares = await api.query.dex.liquidityPool([p0.toHuman(), p1.toHuman()]);
+				} catch {
+					poolCurrentShares = await api.query.dex.liquidityPool([p1.toHuman(), p0.toHuman()]);
+				}
 				const p0Amount = poolCurrentShares[0].mul(amount).div(poolTotalShares);
 				const p1Amount = poolCurrentShares[1].mul(amount).div(poolTotalShares);
 
-				const KnownToken = api.createType('CurrencyId', { 'Token': 'KSM' });
+				// wacky, but works: we use the chain's main token as a swappable token in the dex.
+				const knownToken = api.createType('CurrencyId', { 'Token': api.registry.chainTokens[0] });
 				const p0Name = formatCurrencyId(p0);
 				const p1Name = formatCurrencyId(p1);
+
 				assets.push(new Asset({
 					amount: p0Amount,
 					decimals: findDecimals(api, p0Name),
 					name: `[LP-derived] ${p0Name}`,
 					token_name: p0Name,
-					price: Math.max(await findPriceViaDex(api, p0, p0Amount, KnownToken), await priceOf(p0Name)),
+					price: await findPriceOrCheckDex(api, p0, knownToken),
 					transferrable: false
 				}))
+
 				assets.push(new Asset({
 					amount: p1Amount,
 					decimals: findDecimals(api, p1Name),
 					name: `[LP-derived] ${p1Name}`,
 					token_name: p1Name,
-					price: Math.max(await findPriceViaDex(api, p1, p1Amount, KnownToken), await priceOf(p1Name)),
+					price: await findPriceOrCheckDex(api, p1, knownToken),
 					transferrable: false
 				}))
 			}
@@ -149,7 +203,7 @@ export async function fetch_tokens(api: ApiPromise, account: string): Promise<Pe
 	const entries = await api.query.tokens.accounts.entries(account);
 
 	for (const [key, token_data_raw] of entries) {
-		const token: CurrencyId = api.createType('CurrencyId', key.args[1].toU8a());
+		const token = key.args[1];
 		const tokenData = api.createType('OrmlAccountData', token_data_raw);
 		const maybeAsset = await processToken(api, token, tokenData);
 		if (maybeAsset) {

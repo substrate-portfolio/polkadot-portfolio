@@ -6,23 +6,6 @@ import { PerAccount, PerChain, PerPallet, Summary } from "./types";
 import { priceOf } from "./utils";
 import yargs from 'yargs';
 import { hideBin } from "yargs/helpers"
-import BN from 'bn.js';
-
-
-export async function fetch_vesting_2(api: ApiPromise, account: string, block_number: BN): Promise<PerPallet> {
-	const accountData = await api.query.system.account(account);
-	const vesting = (await api.query.vesting.vesting(account)).unwrapOrDefault();
-	const totalBalance = accountData.data.free.add(accountData.data.reserved);
-	assert.ok(vesting.length <= 1);
-	if (vesting.length === 1) {
-		const schedule = vesting[0];
-		const nonVested = totalBalance.sub(schedule.locked);
-		const madeFree = (block_number.sub(schedule.startingBlock)).mul(schedule.perBlock);
-		const leftVesting = schedule.locked.sub(madeFree);
-	}
-
-	return new PerPallet({ assets: [], name: "vesting" })
-}
 
 const optionsPromise = yargs(hideBin(process.argv))
 	.option('accounts', {
@@ -80,8 +63,8 @@ async function scrapeAccountFunds(account: string, name: string, nativeToken: st
 			perAccount.pallets.push(assets);
 		}
 	} catch(e) {
-		console.error(`error while fetching ${account}/${name} on ${nativeToken}: ${e}`);
-		throw(e)
+		// console.error(`error while fetching ${account}/${name} on ${nativeToken}: ${e}`);
+		// throw(e)
 	}
 
 	return perAccount

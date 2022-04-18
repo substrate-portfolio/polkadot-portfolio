@@ -22,13 +22,18 @@ const COIN_CHAIN_MAP: Map<string, string> = new Map(
 const PRICE_CACHE: Map<string, number> = new Map();
 
 export async function priceOf(token: string): Promise<number> {
-	const tokenTransformed = COIN_CHAIN_MAP.has(token.toLowerCase()) ? COIN_CHAIN_MAP.get(token.toLowerCase()) : token.toLowerCase();
+	const tokenTransformed = COIN_CHAIN_MAP.has(token.toLowerCase()) ? COIN_CHAIN_MAP.get(token.toLowerCase())! : token.toLowerCase();
+	if (PRICE_CACHE.has(tokenTransformed)) {
+		return PRICE_CACHE.get(tokenTransformed)!
+	}
+
 	try {
 		const data = await axios.get(`https://api.coingecko.com/api/v3/coins/${tokenTransformed}`);
 		const price = data.data['market_data']['current_price']['eur'];
+		PRICE_CACHE.set(tokenTransformed, price);
 		return price
 	} catch {
-		console.log(`⛔️ failed to get the price of ${tokenTransformed}`)
+		// console.log(`⛔️ failed to get the price of ${tokenTransformed}`)
 		return 0
 	}
 }

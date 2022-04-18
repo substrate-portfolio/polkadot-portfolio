@@ -1,6 +1,5 @@
 import BN from "bn.js";
 import * as currencyFormatter from "currency-formatter";
-import { createBrotliCompress } from "zlib";
 
 export class Summary {
 	assets: Map<string, [Asset, number]>;
@@ -16,7 +15,6 @@ export class Summary {
 					assets.set(asset.token_name, [cumulative, 0]);
 				} else {
 					const copy: Asset = new Asset({ ...asset });
-
 					assets.set(asset.token_name, [copy, 0]);
 				}
 			}

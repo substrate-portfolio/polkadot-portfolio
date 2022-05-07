@@ -1,15 +1,12 @@
 import React from 'react';
-import Networks from '../Networks';
-import Accounts from '../Accounts';
-import Assets from '../Assets';
-
+import Dashboard from '../../views/Dashboard'
+import Header from '../Header'
 function App() {
   return (
-    <>
-      <Networks />
-      <Accounts />
-      <Assets />
-    </>
+    <div className='relative bg-white h-screen flex flex-col'>
+      <Header />
+      <Dashboard />
+    </div>
   );
 }
 

@@ -1,7 +1,28 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useMemo, useState } from "react";
 import { AppContext } from "../../store";
 import { FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveChain, FRemoveNetwork } from "../../store/store";
+
+interface NetworkItemProps {
+  key: string,
+  network: string,
+  registry: ApiPromise | undefined,
+  disconnect: (network: string) => () => void,
+}
+
+const NetworkItem = ({key, network, registry, disconnect}: NetworkItemProps) => {
+  const networkName = useMemo(() => registry?.runtimeChain ?? network, [network, registry])
+  const isConnected = useMemo(() => registry?.isConnected, [registry])
+  return (
+    <div key={key}>
+      <div className="flex items-center py-1">
+        <span className={`w-3 h-3 rounded-full mr-4 inline-block ${isConnected ? 'bg-green-600' : 'bg-orange-500'}`}></span>
+        <span className="flex-1 inline-block">{networkName}</span>
+        <span className="px-2 rounded-full bg-red-100 hover:bg-red-300 cursor-pointer" onClick={disconnect(network)}>x</span>
+      </div>
+    </div>
+  )
+}
 
 interface NetworksListProps {
   networks: string[]
@@ -16,21 +37,18 @@ const NetworksList = (props: NetworksListProps) => {
 
   console.log("registry:", registry)
 
-  const handleRemove = useCallback((network: string) => () => {
+  const handleDisconnect = useCallback((network: string) => () => {
     removeNetwork(network)
     removeRegistry(network)
     removeChain(network)
   }, [removeNetwork])
 
   if(networks.length) return (
-    <ul className="networksList">
+    <div>
       {networks.map((network, index) => 
-        <li onClick={handleRemove(network)} key={`${index}_${network}`}>
-          {network}
-          {registry.has(network) ? '- Connected' : null}
-        </li>
+        <NetworkItem network={network} registry={registry.get(network)} disconnect={handleDisconnect} key={`${index}_${network}`} />
       )}
-    </ul>
+    </div>
   )
 
   return <p>Please add some networks</p>
@@ -43,7 +61,7 @@ interface AddNetworkProps {
 
 const NetworksSetting = (props: AddNetworkProps) => {
   const {addNetwork, addRegistry} = props;
-  const [networkInput, setNetworkInput] = useState("")
+  const [networkInput, setNetworkInput] = useState('')
 
   const connect = async (networkUri: string): Promise<ApiPromise> => {
     const provider = new WsProvider(networkUri);
@@ -64,9 +82,9 @@ const NetworksSetting = (props: AddNetworkProps) => {
   }, [])
 
   return (
-    <div>
-      <input placeholder="Network url" onInput={handleInput} />
-      <button onClick={addNetworkToList}>Add and Connect to Network</button>
+    <div className="border-t pt-4 pb-2 border-gray-400">
+      <input value={networkInput} name="networkInput" className="border border-gray-100 bg-white w-full py-2 px-4" placeholder="Network url" onChange={handleInput} />
+      <button className="rounded-md bg-green-500 hover:bg-green-700 text-center py-2 px-4 mt-2 w-full appearance-none text-white" onClick={addNetworkToList}>Connect and Add</button>
     </div>
   )
 }
@@ -77,10 +95,16 @@ const Networks = () => {
   const {removeNetwork, addNetwork, addApiRegistry, removeApiRegistry, removeChain} = actions;
 
   return (
-    <div>
-      <h1>Networks:</h1>
-      <NetworksList removeChain={removeChain} networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
-      <NetworksSetting addNetwork={addNetwork} addRegistry={addApiRegistry} />
+    <div className="p-4 h-full flex flex-col">
+      <div className="flex-none">
+        <div className="font-semibold text-xl mb-4 text-slate-600">Chains</div>
+      </div>
+      <div className="flex-1">
+        <NetworksList removeChain={removeChain} networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
+      </div>
+      <div>
+        <NetworksSetting addNetwork={addNetwork} addRegistry={addApiRegistry} />
+      </div>
     </div>
   )
 }

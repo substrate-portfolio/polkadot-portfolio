@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import { scrapeAccountFunds } from '../../services/scrapeAccount';
 import { AppContext } from '../../store';
 import { IAccount } from '../../store/store'
@@ -14,10 +14,11 @@ const PalletList = ({pallets}: PalletListProps) => {
   if(pallets.length <= 0) return <p>No pallet found in this account</p>
   return <div>{pallets.map((pallet: PerPallet) => (
     <div key={pallet.name}>
-      <h5>Pallet: {pallet.name} - Assets:</h5>
+      <h5>Pallet: {pallet.name}</h5>
+      <h6>Total Assets value: {pallet.totalValue()} Euro</h6>
       {pallet.assets.map((asset) => 
         <div>
-          <p>{`${asset.amount.toNumber()}${asset.token_name} - Euro: ${asset.euroValue()}`}</p>
+          <p>{`${asset.amount.toNumber()} ${asset.token_name} - Euro: ${asset.euroValue()}`}</p>
         </div>
       )}
     </div>
@@ -36,6 +37,7 @@ const AccountList = ({accounts}: AccountListProps) => {
       {accounts.map((account: PerAccount) => (
         <div key={account.id}>
           <h3>{account.name} - Pallets:</h3>
+          <h2>Total assets value in pallets: {account.totalValue()} Euro</h2>
           <PalletList pallets={account.pallets}/>
         </div>
       ))}
@@ -47,7 +49,11 @@ const Assets = () => {
   const {actions, state} = useContext(AppContext)
   const {addChain, setLoading} = actions
   const {networks, accounts, chainData, apiRegistry} = state;
-  
+
+  const chainEntries = useMemo(() => Object.entries(Object.fromEntries(chainData)) ,[chainData])
+
+  const totalAssetValuesInAllChains = useMemo(() => chainEntries.reduce((sum, [,perChain]) => sum + perChain.totalAssetValue(), 0), [chainEntries])
+
   const getChainData = useCallback(async (networks: string[], accounts: IAccount[], apiRegistry: Map<string, ApiPromise>) => {
     setLoading(true);
     for (const networkWs of networks) {
@@ -68,10 +74,6 @@ const Assets = () => {
     }
     setLoading(false);
   }, []);
-
-  useEffect(() => {
-    console.log('Chain Data:', chainData)
-  }, [chainData])
   
   useEffect(() => {
     if(networks.length < 1 && accounts.length < 1) return;
@@ -80,14 +82,18 @@ const Assets = () => {
 
   return(
     <div>
-      <h1>chains:</h1>
       <div>
-        {
-          Object.entries(Object.fromEntries(chainData)).map(
+        <div className='p-4 border-b border-gray-200'>
+          <div className='text-lg'>Total Asset Value in All Chains:</div>
+          <div className='text-4xl'><span className='mr-4'>{totalAssetValuesInAllChains}</span><span>Euro</span></div>
+        </div>
+        <div>{
+          chainEntries.map(
             (([key, perChain]: [string, PerChain]) => {
               return (
                 <div key={key}>
                   <h2><b>{perChain.name}:</b></h2>
+                  <h2><>Total assets value in accounts: {perChain.totalAssetValue()} Euro</></h2>
                   <AccountList accounts={perChain.accounts} />
                   <hr/>
                 </div>
@@ -95,6 +101,7 @@ const Assets = () => {
             })
           )
         }
+        </div>
       </div>
     </div>
   )

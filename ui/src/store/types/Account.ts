@@ -14,6 +14,11 @@ export class PerAccount {
 	has_any_value(): boolean {
 		return this.pallets.filter((t) => t.has_any_value()).length > 0
 	}
+
+	// TODO: add currency here and inside funcs default to EUR.
+	totalValue(): number {
+		return this.pallets.reduce((sum, pallet) => sum + pallet.totalValue(), 0)
+	}
 }
 
 interface IPerAccount {

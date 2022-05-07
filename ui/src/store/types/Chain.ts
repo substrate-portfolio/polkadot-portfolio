@@ -8,6 +8,11 @@ export class PerChain {
 		this.name = chain.name;
 		this.accounts = chain.accounts;
 	}
+
+	// TODO: Add currency here, default to Euro
+	totalAssetValue() {
+		return this.accounts.reduce((sum, item) => sum + item.totalValue(), 0)
+	}
 }
 
 interface IPerChain {

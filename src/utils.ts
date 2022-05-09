@@ -33,7 +33,7 @@ export async function priceOf(token: string): Promise<number> {
 		PRICE_CACHE.set(tokenTransformed, price);
 		return price
 	} catch {
-		// console.log(`⛔️ failed to get the price of ${tokenTransformed}`)
+		console.log(`⛔️ failed to get the price of ${tokenTransformed}`)
 		return 0
 	}
 }

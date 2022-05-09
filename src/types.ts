@@ -1,60 +1,42 @@
 import BN from "bn.js";
 import * as currencyFormatter from "currency-formatter";
 
-export class Summary {
-	assets: Map<string, [Asset, number]>;
-	total_eur_value: number;
-
-	constructor(input_assets: Asset[]) {
-		const assets: Map<string, [Asset, number]> = new Map();
-		for (const asset of input_assets) {
-			if (!asset.amount.isZero()) {
-				if (assets.has(asset.token_name)) {
-					const [cumulative, _] = assets.get(asset.token_name) || [asset, 0];
-					cumulative.amount = cumulative.amount.add(asset.amount);
-					assets.set(asset.token_name, [cumulative, 0]);
-				} else {
-					const copy: Asset = new Asset({ ...asset });
-					assets.set(asset.token_name, [copy, 0]);
-				}
-			}
-		}
-
-		// compute sum of EUR-value in the entire map, and assign new ratio to each.
-		let total_eur_value = 0;
-		assets.forEach(([asset, _]) => total_eur_value = total_eur_value + asset.euroValue())
-
-		for (const asset_id of assets.keys()) {
-			// just a wacky way to tell TS that the map def. contains `asset_id`:
-			// https://typescript-eslint.io/rules/no-non-null-assertion/
-			// https://linguinecode.com/post/how-to-solve-typescript-possibly-undefined-value
-			const [asset, _prev_raio] = assets.get(asset_id)!;
-			const new_ratio = asset.euroValue() / total_eur_value;
-			assets.set(asset_id, [asset, new_ratio])
-		}
-
-		this.total_eur_value = total_eur_value;
-		this.assets = assets;
-	}
-
-	stringify(): string {
-		let ret = ""
-		for (const [_, [sum_asset, ratio]] of this.assets.entries()) {
-			ret += `🎁 sum of ${sum_asset.token_name}: ${sum_asset.format_amount()}, ${(ratio * 100).toFixed(2)}% of total.\n`
-		}
-		ret += `💰 total EUR value: ${currencyFormatter.format(this.total_eur_value, { locale: "nl-NL" })}\n`
-		return ret
-	}
+/// Origin of an asset.
+export interface AssetOrigin {
+	/// The owner.
+	account: string,
+	/// The chain to which it belongs.
+	chain: string,
+	/// The source pallet from which this asset has been extracted.
+	source: string,
 }
 
-export class Asset {
-	name: string;
-	token_name: string;
-	amount: BN;
-	decimals: BN;
-	transferrable: boolean;
+interface IAsset {
+	name: string,
+	token_name: string,
+	amount: BN,
+	transferrable: boolean,
+	price: number,
+	decimals: BN,
+	origin: AssetOrigin,
+}
 
+/// A value bearing asset, existing in some blockchain system.
+export class Asset {
+	/// The token name of this asset. Usually a 3-4 character ticker, e.g. BTC.
+	token_name: string;
+	/// Longer version of the name of this asset, e.g. Bitcoin.
+	name: string;
+	/// The amount of asset.
+	amount: BN;
+	/// The decimal points of this asset.
+	decimals: BN;
+	/// Indicates if this asset is transferrable or not.
+	transferrable: boolean;
+	/// Last known price of this asset.
 	price: number;
+	/// Origin details of the asset.
+	origin: AssetOrigin;
 
 	constructor(asset: IAsset) {
 		this.name = asset.name;
@@ -64,6 +46,7 @@ export class Asset {
 		this.amount = asset.amount;
 		this.price = asset.price;
 		this.decimals = asset.decimals;
+		this.origin = asset.origin;
 	}
 
 	decimalAmount(): BN {
@@ -93,96 +76,65 @@ export class Asset {
 	}
 }
 
-interface IAsset {
-	name: string,
-	token_name: string,
-	amount: BN,
-	transferrable: boolean,
-	price: number,
-	decimals: BN,
+/// An asset and its ratio in a summary.
+///
+/// Needless to say, this is only meaningful in the context of an existing `Summary` object.
+interface AssetAndRatio {
+	/// The asset.
+	asset: Asset,
+	/// Its ratio in a given `Summary`.
+	ratio: number,
 }
 
-export class PerPallet {
-	name: string;
-	assets: Asset[];
+/// The summary of a collection of assets.
+///
+/// Any collection of assets can be made into a summary, regardless of their source.
+export class Summary {
+	/// A mapping from the final asset name (i.e. token name) to that asset, combined with a number
+	/// representing the
+	assets: Map<string, AssetAndRatio>;
+	/// The total euro value of this summary.
+	total_eur_value: number;
 
-	constructor(per_pallet: IPerPallet) {
-		this.name = per_pallet.name;
-		this.assets = per_pallet.assets;
-	}
-
-	has_any_value(): boolean {
-		return this.assets.filter((a) => !a.amount.isZero()).length > 0
-	}
-
-	into_summary(): Summary {
-		return new Summary(this.assets)
-	}
-}
-
-interface IPerPallet {
-	name: string,
-	assets: Asset[]
-}
-
-export class PerAccount {
-	id: string;
-	name: string;
-	pallets: PerPallet[];
-
-	constructor(per_account: IPerAccount) {
-		this.id = per_account.id;
-		this.name = per_account.name;
-		this.pallets = per_account.pallets;
-	}
-
-	has_any_value(): boolean {
-		return this.pallets.filter((t) => t.has_any_value()).length > 0
-	}
-
-	into_summary(): Summary {
-		return new Summary(this.pallets.flatMap((p) => p.assets))
-	}
-}
-
-interface IPerAccount {
-	id: string,
-	name: string,
-	pallets: PerPallet[],
-}
-
-export class PerChain {
-	name: string;
-	accounts: PerAccount[];
-
-	constructor(chain: IPerChain) {
-		this.name = chain.name;
-		this.accounts = chain.accounts;
-	}
-
-	display() {
-		for (const account of this.accounts) {
-			if (!account.has_any_value()) { continue }
-			console.log(`🧾 Account: ${account.name} (${account.id})`)
-			for (const pallet of account.pallets) {
-				if (!pallet.has_any_value()) { continue }
-				for (const asset of pallet.assets) {
-					if (!asset.amount.isZero()) {
-						console.log(`${asset.stringify()}`)
-					}
+	constructor(input_assets: Asset[]) {
+		const assets: Map<string, AssetAndRatio> = new Map();
+		for (const asset of input_assets) {
+			if (!asset.amount.isZero()) {
+				if (assets.has(asset.token_name)) {
+					const { asset: cumulative, ratio } = assets.get(asset.token_name) || { asset: asset, ratio: 0 };
+					cumulative.amount = cumulative.amount.add(asset.amount);
+					assets.set(asset.token_name, { asset: cumulative, ratio: 0 });
+				} else {
+					const copy: Asset = new Asset({ ...asset });
+					assets.set(asset.token_name, { asset: copy, ratio: 0 });
 				}
 			}
 		}
 
-		console.log(this.into_summary().stringify())
+		// compute sum of EUR-value in the entire map, and assign new ratio to each.
+		let total_eur_value = 0;
+		assets.forEach(({ asset }) => total_eur_value = total_eur_value + asset.euroValue())
+
+		for (const asset_id of assets.keys()) {
+			// just a wacky way to tell TS that the map def. contains `asset_id`:
+			// https://typescript-eslint.io/rules/no-non-null-assertion/
+			// https://linguinecode.com/post/how-to-solve-typescript-possibly-undefined-value
+			const  { asset, ratio: _prev_raio } = assets.get(asset_id)!;
+			const new_ratio = asset.euroValue() / total_eur_value;
+			assets.set(asset_id, { asset, ratio: new_ratio })
+		}
+
+		this.total_eur_value = total_eur_value;
+		this.assets = assets;
 	}
 
-	into_summary(): Summary {
-		return new Summary(this.accounts.flatMap((a) => a.pallets.flatMap((p) => p.assets)))
+	stringify(): string {
+		let ret = ""
+		const sorted = Array.from(this.assets.entries()).sort((a, b) => a[1].ratio - b[1].ratio).reverse();
+		for (const [_, { asset: sum_asset , ratio }] of sorted) {
+			ret += `🎁 sum of ${sum_asset.token_name}: ${sum_asset.format_amount()}, ${(ratio * 100).toFixed(2)}% of total [unit price = ${sum_asset.price}].\n`
+		}
+		ret += `💰 total EUR value: ${currencyFormatter.format(this.total_eur_value, { locale: "nl-NL" })}\n`
+		return ret
 	}
-}
-
-interface IPerChain {
-	name: string
-	accounts: PerAccount[]
 }

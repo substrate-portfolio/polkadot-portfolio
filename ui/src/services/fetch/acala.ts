@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { ApiPromise } from '@polkadot/api';
-import { Asset, PerPallet } from '../../store/types';
-import { CurrencyId, PoolId, DexShare } from "@acala-network/types/interfaces/"
+import { Asset, AssetOrigin } from '../../store/types/Asset';
+import { CurrencyId, PoolId, TradingPair, DexShare } from "@acala-network/types/interfaces/"
 import { OrmlAccountData } from "@open-web3/orml-types/interfaces/"
 import { types } from "@acala-network/types"
 import BN from 'bn.js';
@@ -35,7 +35,7 @@ async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): P
 	// now get the price of `y`, then known token..
 	const MUL = 10000;
 	const yPrice = new BN(await priceOf(formatCurrencyId(y)) * MUL);
-	console.log(`price of ${x.toString()} via ${y.toString()} is ${yTotal.mul(yPrice).div(xTotal).toNumber() / MUL}`)
+	console.log(`🎩 price of ${x.toString()} via ${y.toString()} is ${yTotal.mul(yPrice).div(xTotal).toNumber() / MUL}`)
 	const price = yTotal.mul(yPrice).div(xTotal).toNumber() / MUL;
 	PRICE_CACHE.set(formatCurrencyId(x), price);
 	return price
@@ -101,7 +101,7 @@ function poolToName(pool: PoolId): string {
 	}
 }
 
-async function processToken(api: ApiPromise, token: CurrencyId, accountData: OrmlAccountData): Promise<Asset | undefined> {
+async function processToken(api: ApiPromise, token: CurrencyId, accountData: OrmlAccountData, origin: AssetOrigin): Promise<Asset | undefined> {
 	if (token.isToken) {
 		const tokenName = token.asToken.toString();
 		const knownToken = api.createType('CurrencyId', { 'Token': api.registry.chainTokens[0] });
@@ -113,7 +113,8 @@ async function processToken(api: ApiPromise, token: CurrencyId, accountData: Orm
 			name: formatCurrencyId(token),
 			price,
 			token_name: tokenName,
-			transferrable: true
+			transferrable: true,
+			origin,
 		})
 	} else if (token.isForeignAsset) {
 		const assetMetadata = (await api.query.assetRegistry.assetMetadatas({ 'ForeignAssetId': token.asForeignAsset })).unwrap();
@@ -124,14 +125,15 @@ async function processToken(api: ApiPromise, token: CurrencyId, accountData: Orm
 			name: formatCurrencyId(token),
 			price,
 			token_name: assetMetadata.toHuman().name,
-			transferrable: true
+			transferrable: true,
+			origin,
 		})
 	} else {
 		return undefined
 	}
 }
 
-export async function fetch_reward_pools(api: ApiPromise, account: string): Promise<PerPallet> {
+export async function fetch_reward_pools(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
 	api.registerTypes(types);
 	const assets: Asset[] = [];
 
@@ -170,7 +172,8 @@ export async function fetch_reward_pools(api: ApiPromise, account: string): Prom
 					name: `[LP-derived] ${p0Name}`,
 					token_name: p0Name,
 					price: await findPriceOrCheckDex(api, p0, knownToken),
-					transferrable: false
+					transferrable: false,
+					origin: { account, chain, source: "reward pools pallet" }
 				}))
 
 				assets.push(new Asset({
@@ -179,7 +182,8 @@ export async function fetch_reward_pools(api: ApiPromise, account: string): Prom
 					name: `[LP-derived] ${p1Name}`,
 					token_name: p1Name,
 					price: await findPriceOrCheckDex(api, p1, knownToken),
-					transferrable: false
+					transferrable: false,
+					origin: { account, chain, source: "reward pools pallet" }
 				}))
 			}
 
@@ -189,28 +193,29 @@ export async function fetch_reward_pools(api: ApiPromise, account: string): Prom
 				name: poolName,
 				token_name: poolTokenName,
 				price: await priceOf(poolTokenName),
-				transferrable: false
+				transferrable: false,
+				origin: { account, chain, source: "reward pools pallet" }
 			}))
 		}
 	}
 
-	return new PerPallet({ assets, name: "rewardPools" })
+	return assets
 }
 
-export async function fetch_tokens(api: ApiPromise, account: string): Promise<PerPallet> {
+export async function fetch_tokens(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
 	api.registerTypes(types)
 	const assets: Asset[] = [];
-
+	const origin: AssetOrigin = { account, chain, source: "tokens pallet" }
 	const entries = await api.query.tokens.accounts.entries(account);
 
 	for (const [key, token_data_raw] of entries) {
 		const token = key.args[1];
 		const tokenData = api.createType('OrmlAccountData', token_data_raw);
-		const maybeAsset = await processToken(api, token, tokenData);
+		const maybeAsset = await processToken(api, token, tokenData, origin);
 		if (maybeAsset) {
 			assets.push(maybeAsset);
 		}
 	}
 
-	return new PerPallet({ assets, name: "tokens" })
+	return assets
 }

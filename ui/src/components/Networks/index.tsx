@@ -1,7 +1,7 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import { AppContext } from "../../store";
-import { FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveChain, FRemoveNetwork } from "../../store/store";
+import { FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork } from "../../store/store";
 
 interface NetworkItemProps {
   key: string,
@@ -29,18 +29,16 @@ interface NetworksListProps {
   registry: Map<string, ApiPromise>
   removeNetwork: FRemoveNetwork,
   removeRegistry: FRemoveApiRegistry,
-  removeChain: FRemoveChain,
 }
 
 const NetworksList = (props: NetworksListProps) => {
-  const {networks, registry, removeNetwork, removeRegistry, removeChain} = props;
+  const {networks, registry, removeNetwork, removeRegistry} = props;
 
   console.log("registry:", registry)
 
   const handleDisconnect = useCallback((network: string) => () => {
     removeNetwork(network)
     removeRegistry(network)
-    removeChain(network)
   }, [removeNetwork])
 
   if(networks.length) return (
@@ -57,29 +55,36 @@ const NetworksList = (props: NetworksListProps) => {
 interface AddNetworkProps {
   addNetwork: FAddNetwork,
   addRegistry: FAddApiRegistry,
+  networks: string[],
 }
 
 const NetworksSetting = (props: AddNetworkProps) => {
-  const {addNetwork, addRegistry} = props;
+  const {addNetwork, addRegistry, networks} = props;
   const [networkInput, setNetworkInput] = useState('')
 
   const connect = async (networkUri: string): Promise<ApiPromise> => {
     const provider = new WsProvider(networkUri);
 		const api = await ApiPromise.create({ provider });
-    console.log(api)
     return api;
   }
 
   const addNetworkToList = useCallback(async () => {
     addNetwork(networkInput);
-    const api = await connect(networkInput);
-    addRegistry(networkInput, api)
     setNetworkInput('')
   }, [addNetwork, networkInput])
 
   const handleInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setNetworkInput(event.target.value)
   }, [])
+
+  const setupNetwork = async (network: string) => {
+    const api = await connect(network);
+    addRegistry(network, api)
+  }
+
+  React.useEffect(() => {
+    networks.forEach((network) => setupNetwork(network))
+  }, [networks])
 
   return (
     <div className="border-t pt-4 pb-2 border-gray-400">
@@ -92,7 +97,7 @@ const NetworksSetting = (props: AddNetworkProps) => {
 const Networks = () => {
   const {state, actions} = useContext(AppContext);
   const { networks, apiRegistry } = state;
-  const {removeNetwork, addNetwork, addApiRegistry, removeApiRegistry, removeChain} = actions;
+  const {removeNetwork, addNetwork, addApiRegistry, removeApiRegistry} = actions;
 
   return (
     <div className="p-4 h-full flex flex-col">
@@ -100,10 +105,10 @@ const Networks = () => {
         <div className="font-semibold text-xl mb-4 text-slate-600">Chains</div>
       </div>
       <div className="flex-1">
-        <NetworksList removeChain={removeChain} networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
+        <NetworksList networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
       </div>
       <div>
-        <NetworksSetting addNetwork={addNetwork} addRegistry={addApiRegistry} />
+        <NetworksSetting networks={networks} addNetwork={addNetwork} addRegistry={addApiRegistry} />
       </div>
     </div>
   )

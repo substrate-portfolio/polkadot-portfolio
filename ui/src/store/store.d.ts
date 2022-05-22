@@ -1,11 +1,11 @@
 import { ApiPromise } from "@polkadot/api";
-import { PerChain } from "./types";
+import { Asset } from "./types/Asset";
 
 export interface StoreState {
   accounts: IAccount[],
   networks: string[],
   apiRegistry: Map<string, ApiRegistry>,
-  chainData: Map<string, PerChain>,
+  assets: Asset[],
   loading: boolean,
 }
 
@@ -27,8 +27,7 @@ export interface IActionList {
   setLoading: FSetLoading,
   addApiRegistry: FAddApiRegistry,
   removeApiRegistry: FRemoveApiRegistry,
-  addChain: FAddChain,
-  removeChain: FRemoveChain,
+  setAssets: FSetAssets,
 }
 
 export type FAddNetwork = (network: string) => void
@@ -38,5 +37,4 @@ export type FRemoveAccount = (accountId: string) => void
 export type FSetLoading = (state: boolean) => void
 export type FAddApiRegistry = (network: string, registry: ApiPromise) => void
 export type FRemoveApiRegistry = (network: string) => void
-export type FAddChain = (network: string, chainData: PerChain) => void
-export type FRemoveChain = (network: string) => void
+export type FSetAssets = (assets: Asset[]) => void

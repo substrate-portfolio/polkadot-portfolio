@@ -3,81 +3,97 @@ import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import { scrapeAccountFunds } from '../../services/scrapeAccount';
 import { AppContext } from '../../store';
 import { IAccount } from '../../store/store'
-import { PerAccount, PerChain, PerPallet } from '../../store/types';
-import { priceOf } from '../../utils';
+import { Asset } from '../../store/types/Asset';
 
-interface PalletListProps {
-  pallets: PerPallet[]
+interface AssetListProps {
+  assets: Asset[]
+  accounts: IAccount[]
+  apiRegistry: Map<string, ApiPromise>
 }
 
-const PalletList = ({pallets}: PalletListProps) => {
-  if(pallets.length <= 0) return <p>No pallet found in this account</p>
-  return <div>{pallets.map((pallet: PerPallet) => (
-    <div key={pallet.name}>
-      <h5>Pallet: {pallet.name}</h5>
-      <h6>Total Assets value: {pallet.totalValue()} Euro</h6>
-      {pallet.assets.map((asset) => 
-        <div>
-          <p>{`${asset.amount.toNumber()} ${asset.token_name} - Euro: ${asset.euroValue()}`}</p>
-        </div>
-      )}
-    </div>
-  ))}
-  </div>
+interface AssetItemProps {
+  asset: Asset
+  accounts: IAccount[]
+  apiRegistry: Map<string, ApiPromise>
 }
 
-interface AccountListProps {
-  accounts: PerAccount[]
-}
+const AssetItem = ({asset, accounts, apiRegistry}: AssetItemProps) => {
+  const accountName = useMemo(() => {
+    const account = accounts.find((item) => item.id == asset.origin.account)
+    return account?.name ?? ''
+  }, [accounts])
 
-const AccountList = ({accounts}: AccountListProps) => {
-  if(accounts.length <= 0) return <p>No account found in this</p>
+
   return (
-    <div>
-      {accounts.map((account: PerAccount) => (
-        <div key={account.id}>
-          <h3>{account.name} - Pallets:</h3>
-          <h2>Total assets value in pallets: {account.totalValue()} Euro</h2>
-          <PalletList pallets={account.pallets}/>
-        </div>
-      ))}
+    <div className='flex justify-between w-full mb-2 hover:bg-gray-50 border-b'>
+      <span className='flex-1 w-full p-2'>{asset.token_name}</span>
+      <span className='flex-1 w-full p-2'>{accountName}</span>
+      <span className='flex-1 w-full p-2'>{asset.origin.chain}</span>
+      <span className='flex-1 w-full p-2'>{asset.origin.source}</span>
+      <span className='flex-1 w-full p-2'>{asset.format_amount()}</span>
+      <span className='flex-1 w-full p-2'>{asset.euroValue()}</span>
     </div>
+  )
+}
+
+const AssetList = ({assets, accounts, apiRegistry}: AssetListProps) => {
+  const filteredAssets = useMemo(() => 
+    assets.filter((item) => parseInt(item.format_amount()) > 0)
+  , [assets])
+
+  if(assets.length <= 0) return (
+    <div>No Asset found</div>
+  )
+
+  return (
+  <div>
+    <div className='flex justify-between w-full border-b-2'>
+      <span className='flex-1 w-full p-2 font-bold'>Token Name</span>
+      <span className='flex-1 w-full p-2 font-bold'>Account Name</span>
+      <span className='flex-1 w-full p-2 font-bold'>Chain</span>
+      <span className='flex-1 w-full p-2 font-bold'>Source</span>
+      <span className='flex-1 w-full p-2 font-bold'>Amount</span>
+      <span className='flex-1 w-full p-2 font-bold'>Value</span>
+    </div>
+    {filteredAssets.map((asset, index) => <AssetItem key={`${asset.name}_${index}`} asset={asset} accounts={accounts} apiRegistry={apiRegistry} />)}
+  </div>
   )
 }
 
 const Assets = () => {
   const {actions, state} = useContext(AppContext)
-  const {addChain, setLoading} = actions
-  const {networks, accounts, chainData, apiRegistry} = state;
+  const {setLoading, setAssets} = actions
+  const {networks, accounts, apiRegistry, assets} = state;
 
-  const chainEntries = useMemo(() => Object.entries(Object.fromEntries(chainData)) ,[chainData])
+  const totalAssetValuesInAllChains = useMemo(() => 
+    assets.reduce((sum, asset) => sum + asset.euroValue(), 0)
+  , [assets])
 
-  const totalAssetValuesInAllChains = useMemo(() => chainEntries.reduce((sum, [,perChain]) => sum + perChain.totalAssetValue(), 0), [chainEntries])
-
-  const getChainData = useCallback(async (networks: string[], accounts: IAccount[], apiRegistry: Map<string, ApiPromise>) => {
+  const fetchAllAssets = useCallback(async (networks: string[], accounts: IAccount[], apiRegistry: Map<string, ApiPromise>): Promise<Asset[]> => {
     setLoading(true);
+    let assets: Asset[] = [];
     for (const networkWs of networks) {
       const api = apiRegistry.get(networkWs)!;
-      const chain = (await api.rpc.system.chain()).toLowerCase();
-  
-      const nativeToken = api.registry.chainTokens[0];
-      const price = await priceOf(nativeToken);
-  
-      const chainAccounts: PerAccount[] = [];
-      (await Promise.all(accounts.map(({id: account, name}) => {
-        return scrapeAccountFunds(account, name, nativeToken, price, api)
-      }))).forEach((perAccount) => chainAccounts.push(perAccount))
-  
-      const chainData = new PerChain({ accounts: chainAccounts, name: chain });
-      console.log(chainData);
-      addChain(networkWs, chainData)
+
+      (await Promise.allSettled(accounts.map(({id: account}) => scrapeAccountFunds(account, api)
+      ))).forEach((result) => {
+        if(result.status === "fulfilled") {
+          assets = assets.concat(result.value)
+        }
+      })
     }
     setLoading(false);
+    return assets;
   }, []);
+
+  const refreshAssets = useCallback(async (networks: string[], accounts: IAccount[], apiRegistry: Map<string, ApiPromise>) => {
+    const assets = await fetchAllAssets(networks, accounts, apiRegistry);
+    setAssets(assets)
+  }, [fetchAllAssets, setAssets])
   
   useEffect(() => {
     if(networks.length < 1 && accounts.length < 1) return;
-    getChainData(networks, accounts, apiRegistry);
+    refreshAssets(networks, accounts, apiRegistry);
   }, [networks, accounts, apiRegistry]);
 
   return(
@@ -87,20 +103,8 @@ const Assets = () => {
           <div className='text-lg'>Total Asset Value in All Chains:</div>
           <div className='text-4xl'><span className='mr-4'>{totalAssetValuesInAllChains}</span><span>Euro</span></div>
         </div>
-        <div>{
-          chainEntries.map(
-            (([key, perChain]: [string, PerChain]) => {
-              return (
-                <div key={key}>
-                  <h2><b>{perChain.name}:</b></h2>
-                  <h2><>Total assets value in accounts: {perChain.totalAssetValue()} Euro</></h2>
-                  <AccountList accounts={perChain.accounts} />
-                  <hr/>
-                </div>
-              )
-            })
-          )
-        }
+        <div>
+          <AssetList assets={assets} accounts={accounts} apiRegistry={apiRegistry} />
         </div>
       </div>
     </div>

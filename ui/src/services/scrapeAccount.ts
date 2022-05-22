@@ -1,47 +1,46 @@
 import { ApiPromise } from "@polkadot/api";
-import { PerAccount } from "../store/types";
+import { Asset } from "../store/types/Asset";
 import { fetch_assets, fetch_crowdloan, fetch_reward_pools, fetch_system, fetch_tokens } from "./fetch";
 import { fetch_crowdloan_rewards } from "./fetch/moonbeam";
 
-export async function scrapeAccountFunds(account: string, name: string, nativeToken: string, price: number, api: ApiPromise): Promise<PerAccount> {
-	const perAccount = new PerAccount({ pallets: [], id: account, name });
+export async function scrapeAccountFunds(account: string, api: ApiPromise): Promise<Asset[]> {
+	let assets: Asset[] = [];
+	const chain = (await api.rpc.system.chain()).toString();
+
 	try {
 		if (api.query.system) {
-			const system = await fetch_system(api, account, nativeToken, price);
-			perAccount.pallets.push(system)
+			const system = await fetch_system(api, account, chain);
+			assets = assets.concat(system)
 		}
 
 		if (api.query.crowdloanRewards) {
-			const system = await fetch_crowdloan_rewards(api, account, nativeToken, price);
-			perAccount.pallets.push(system)
-		}
-
-		if (api.query.vesting) {
-			// const vesting = await fetch_vesting(api, account, block_number);
+			const cRewards = await fetch_crowdloan_rewards(api, account, chain);
+			assets = assets.concat(cRewards)
 		}
 
 		if (api.query.crowdloan) {
-			const crowdloan = await fetch_crowdloan(api, account, nativeToken, price);
-			perAccount.pallets.push(crowdloan)
+			const crowdloan = await fetch_crowdloan(api, account, chain);
+			assets = assets.concat(crowdloan)
 		}
 
 		if (api.query.assets) {
-			const assets = await fetch_assets(api, account);
-			perAccount.pallets.push(assets);
+			const _assets = await fetch_assets(api, account, chain);
+			assets = assets.concat(_assets)
 		}
 
 		if (api.query.tokens) {
-			const assets = await fetch_tokens(api, account);
-			perAccount.pallets.push(assets);
+			const tokens = await fetch_tokens(api, account, chain);
+			assets = assets.concat(tokens)
 		}
 
 		if (api.query.rewards) {
-			const assets = await fetch_reward_pools(api, account);
-			perAccount.pallets.push(assets);
+			const rewardPools = await fetch_reward_pools(api, account, chain);
+			assets = assets.concat(rewardPools)
 		}
 	} catch(e) {
-		console.error(`error while fetching ${account}/${name} on ${nativeToken}: ${e}`);
+		console.error(`error while fetching ${account}`);
+		// throw(e)
 	}
 
-	return perAccount
+	return assets
 }

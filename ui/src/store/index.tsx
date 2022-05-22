@@ -1,11 +1,22 @@
 import React, { useReducer } from 'react';
 import AppReducer, { ActionTypes } from './reducer/AppReducer';
-import { FAddAccount, FAddApiRegistry, FAddChain, FAddNetwork, FRemoveApiRegistry, FRemoveChain, FRemoveNetwork, FSetLoading, IActionList, IAppContext, StoreState } from './store';
+import { FAddAccount, FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IActionList, IAppContext, StoreState } from './store';
+
+const INITIAL_NETWORKS = ["wss://kusama-rpc.polkadot.io",
+"wss://rpc.polkadot.io",
+"wss://statemine-rpc.polkadot.io",
+"wss://karura-rpc-0.aca-api.network",
+"wss://acala-polkadot.api.onfinality.io/public-ws",
+"wss://khala-api.phala.network/ws",
+"wss://rpc.astar.network",
+"wss://rpc.parallel.fi",
+"wss://wss.api.moonbeam.network",
+"wss://wss.moonriver.moonbeam.network"]
 
 export const initialState = {
   accounts: [],
-  networks: [],
-  chainData: new Map(),
+  networks: INITIAL_NETWORKS,
+  assets: [],
   apiRegistry: new Map(),
   loading: false,
 } as StoreState
@@ -72,22 +83,13 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     })
   }
 
-  const addChain: FAddChain = (network, chain) => {
+  const setAssets: FSetAssets = (assets) => {
     dispatch({
-      type: ActionTypes.AddChain,
-      payload: {
-        network,
-        chain
-      },
+      type: ActionTypes.SetAssets,
+      payload: assets,
     })
   }
 
-  const removeChain: FRemoveChain = (network) => {
-    dispatch({
-      type: ActionTypes.RemoveChain,
-      payload: network,
-    })
-  }
 
   const actions = {
     addNetwork,
@@ -97,8 +99,7 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     setLoading,
     addApiRegistry,
     removeApiRegistry,
-    addChain,
-    removeChain,
+    setAssets
   } as IActionList
 
   const context = {

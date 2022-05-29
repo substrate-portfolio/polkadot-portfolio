@@ -1,7 +1,11 @@
+import { faClose, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import { AppContext } from "../../store";
 import { FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork } from "../../store/store";
+import Modal from "../Modal";
+import ModalBox from "../ModalBox";
 
 interface NetworkItemProps {
   key: string,
@@ -17,8 +21,10 @@ const NetworkItem = ({key, network, registry, disconnect}: NetworkItemProps) => 
     <div key={key}>
       <div className="flex items-center py-1">
         <span className={`w-3 h-3 rounded-full mr-4 inline-block ${isConnected ? 'bg-green-600' : 'bg-orange-500'}`}></span>
-        <span className="flex-1 inline-block">{networkName}</span>
-        <span className="px-2 rounded-full bg-red-100 hover:bg-red-300 cursor-pointer" onClick={disconnect(network)}>x</span>
+        <span className="flex-1 inline-block">{networkName.length > 20 ? `${networkName.slice(0,20)}...` : networkName}</span>
+        <span className="px-2 rounded-full bg-red-100 hover:bg-red-300 cursor-pointer" onClick={disconnect(network)}>
+          <FontAwesomeIcon icon={faClose} size="xs" className="text-red-800" />
+        </span>
       </div>
     </div>
   )
@@ -87,10 +93,11 @@ const NetworksSetting = (props: AddNetworkProps) => {
   }, [networks])
 
   return (
-    <div className="border-t pt-4 pb-2 border-gray-400">
-      <input value={networkInput} name="networkInput" className="border border-gray-100 bg-white w-full py-2 px-4" placeholder="Network url" onChange={handleInput} />
-      <button className="rounded-md bg-green-500 hover:bg-green-700 text-center py-2 px-4 mt-2 w-full appearance-none text-white" onClick={addNetworkToList}>Connect and Add</button>
-    </div>
+    <ModalBox title="Add Network">
+      <p className="pt-2 px-2 pb-4">Add your network WSS address.</p>
+      <input value={networkInput} name="networkInput" className="border rounded-md border-gray-100 bg-white w-full py-2 px-4" placeholder="Network url" onChange={handleInput} />
+      <button className="rounded-md mt-7 bg-green-500 hover:bg-green-700 text-center py-2 px-4 mt-2 w-full appearance-none text-white" onClick={addNetworkToList}>Add and Connect</button>
+    </ModalBox>
   )
 }
 
@@ -98,18 +105,29 @@ const Networks = () => {
   const {state, actions} = useContext(AppContext);
   const { networks, apiRegistry } = state;
   const {removeNetwork, addNetwork, addApiRegistry, removeApiRegistry} = actions;
+  const [modalOpen, setModalState] = useState(false)
+  
+  const handleModalState = React.useCallback((state: boolean) => () => {
+    setModalState(state)
+  }, [])
 
   return (
-    <div className="p-4 h-full flex flex-col">
-      <div className="flex-none">
-        <div className="font-semibold text-xl mb-4 text-slate-600">Chains</div>
+    <div className="p-4 flex flex-col">
+      <div className="flex-none flex justify-between items-center mb-4">
+        <span className="font-semibold inline-flex text-xl text-slate-600">Chains</span>
+        <button 
+          className="inline-flex items-center rounded-md bg-green-500 hover:bg-green-700 text-center text-sm py-2 px-2 appearance-none text-white"
+          onClick={handleModalState(true)}
+        >
+          <span>Add Network</span>
+          <FontAwesomeIcon className="ml-2" icon={faPlus} size="xs" color="white" /></button>
       </div>
       <div className="flex-1">
         <NetworksList networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
       </div>
-      <div>
+      <Modal closeFn={handleModalState(false)} state={modalOpen}>
         <NetworksSetting networks={networks} addNetwork={addNetwork} addRegistry={addApiRegistry} />
-      </div>
+      </Modal>
     </div>
   )
 }

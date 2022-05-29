@@ -1,6 +1,7 @@
 import React, { useReducer } from 'react';
+import { getLocalStorage, setLocalStorage } from '../utils/localStorage';
 import AppReducer, { ActionTypes } from './reducer/AppReducer';
-import { FAddAccount, FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IActionList, IAppContext, StoreState } from './store';
+import { FAddAccount, FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IAccount, IActionList, IAppContext, StoreState } from './store';
 
 const INITIAL_NETWORKS = ["wss://kusama-rpc.polkadot.io",
 "wss://rpc.polkadot.io",
@@ -13,9 +14,12 @@ const INITIAL_NETWORKS = ["wss://kusama-rpc.polkadot.io",
 "wss://wss.api.moonbeam.network",
 "wss://wss.moonriver.moonbeam.network"]
 
+const NETWORK_KEY = "networks"
+const ACCOUNT_KEY = "accounts"
+
 export const initialState = {
-  accounts: [],
-  networks: INITIAL_NETWORKS,
+  accounts: getLocalStorage(ACCOUNT_KEY) ?? [],
+  networks: getLocalStorage(NETWORK_KEY) ?? INITIAL_NETWORKS,
   assets: [],
   apiRegistry: new Map(),
   loading: false,
@@ -90,7 +94,6 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     })
   }
 
-
   const actions = {
     addNetwork,
     removeNetwork,
@@ -106,6 +109,12 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     state,
     actions,
   }
+  
+  React.useEffect(() => {
+    const {accounts, networks} = state
+    setLocalStorage(ACCOUNT_KEY, accounts)
+    setLocalStorage(NETWORK_KEY, networks)
+  }, [state])
 
   return (
     <AppContext.Provider value={context}>

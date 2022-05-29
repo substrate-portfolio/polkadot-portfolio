@@ -40,8 +40,6 @@ interface NetworksListProps {
 const NetworksList = (props: NetworksListProps) => {
   const {networks, registry, removeNetwork, removeRegistry} = props;
 
-  console.log("registry:", registry)
-
   const handleDisconnect = useCallback((network: string) => () => {
     removeNetwork(network)
     removeRegistry(network)
@@ -60,19 +58,11 @@ const NetworksList = (props: NetworksListProps) => {
 
 interface AddNetworkProps {
   addNetwork: FAddNetwork,
-  addRegistry: FAddApiRegistry,
-  networks: string[],
 }
 
 const NetworksSetting = (props: AddNetworkProps) => {
-  const {addNetwork, addRegistry, networks} = props;
+  const {addNetwork} = props;
   const [networkInput, setNetworkInput] = useState('')
-
-  const connect = async (networkUri: string): Promise<ApiPromise> => {
-    const provider = new WsProvider(networkUri);
-		const api = await ApiPromise.create({ provider });
-    return api;
-  }
 
   const addNetworkToList = useCallback(async () => {
     addNetwork(networkInput);
@@ -82,15 +72,6 @@ const NetworksSetting = (props: AddNetworkProps) => {
   const handleInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setNetworkInput(event.target.value)
   }, [])
-
-  const setupNetwork = async (network: string) => {
-    const api = await connect(network);
-    addRegistry(network, api)
-  }
-
-  React.useEffect(() => {
-    networks.forEach((network) => setupNetwork(network))
-  }, [networks])
 
   return (
     <ModalBox title="Add Network">
@@ -111,6 +92,21 @@ const Networks = () => {
     setModalState(state)
   }, [])
 
+  const connect = async (networkUri: string): Promise<ApiPromise> => {
+    const provider = new WsProvider(networkUri);
+		const api = await ApiPromise.create({ provider });
+    return api;
+  }
+
+  const setupNetwork = async (network: string) => {
+    const api = await connect(network);
+    addApiRegistry(network, api)
+  }
+
+  React.useEffect(() => {
+    networks.forEach((network) => setupNetwork(network))
+  }, [networks])
+
   return (
     <div className="p-4 flex flex-col">
       <div className="flex-none flex justify-between items-center mb-4">
@@ -126,7 +122,7 @@ const Networks = () => {
         <NetworksList networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
       </div>
       <Modal closeFn={handleModalState(false)} state={modalOpen}>
-        <NetworksSetting networks={networks} addNetwork={addNetwork} addRegistry={addApiRegistry} />
+        <NetworksSetting addNetwork={addNetwork} />
       </Modal>
     </div>
   )

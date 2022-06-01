@@ -34,7 +34,7 @@ const AssetItem = ({asset, accounts, apiRegistry}: AssetItemProps) => {
       <span className='flex-1 w-full p-2'>{asset.origin.chain}</span>
       <span className='flex-1 w-full p-2'>{asset.origin.source}</span>
       <span className='flex-1 w-full p-2'>{asset.format_amount()}</span>
-      <span className='flex-1 w-full p-2'>{asset.euroValue()}</span>
+      <span className='flex-1 w-full p-2'>{currencyFormat(asset.euroValue())}</span>
     </div>
   )
 }
@@ -68,7 +68,7 @@ const Assets = () => {
 
   const totalAssetValuesInAllChains = useMemo(() => {
     const sum = assets.reduce((sum, asset) => sum + asset.euroValue(), 0)
-    return currencyFormat(sum, 'EUR', 'en-US');
+    return currencyFormat(sum);
   }
   , [assets])
 

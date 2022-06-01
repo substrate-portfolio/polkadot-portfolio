@@ -43,7 +43,7 @@ export function findDecimals(api: ApiPromise, token: string): BN  {
 	return index > -1 ? new BN(api.registry.chainDecimals[index]): new BN(1);
 }
 
-export function currencyFormat(num: number, currency: string, locale: string): string {
+export function currencyFormat(num: number, currency: string = 'EUR', locale: string = 'en-US'): string {
 	const formatter = new Intl.NumberFormat(locale, {
 		style: 'currency',
 		currency,

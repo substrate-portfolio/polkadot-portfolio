@@ -59,7 +59,7 @@ export const AccountListModify = () => {
         <input value={name} className="border rounded-md border-gray-100 py-2 px-4 mb-2" placeholder="Account Name" onChange={handleName} />
         <input value={stash} className="border rounded-md border-gray-100 py-2 px-4" placeholder="Account Id" onChange={handleStash} />
       </div>
-      <button className="rounded-md mt-7 bg-green-500 hover:bg-green-700 text-center py-2 px-4 mt-2 w-full appearance-none text-white" onClick={addAccountToList}>Add Account</button>
+      <button className="rounded-md mt-7 bg-green-500 hover:bg-green-700 text-center py-2 px-4 w-full appearance-none text-white" onClick={addAccountToList}>Add Account</button>
     </ModalBox>
   )
 }

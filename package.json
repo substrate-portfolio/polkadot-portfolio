@@ -19,6 +19,7 @@
 		"@babel/core": "^7.17.8",
 		"@babel/preset-typescript": "^7.16.7",
 		"@types/currency-formatter": "^1.5.1",
+		"@types/lodash": "^4.14.182",
 		"@types/node": "^17.0.23",
 		"@types/yargs": "^17.0.10",
 		"@typescript-eslint/eslint-plugin": "^5.17.0",
@@ -38,6 +39,7 @@
 		"axios": "^0.26.1",
 		"bn.js": "^5.2.0",
 		"currency-formatter": "^1.5.9",
+		"loadash": "^1.0.0",
 		"yargs": "^17.4.0"
 	}
 }

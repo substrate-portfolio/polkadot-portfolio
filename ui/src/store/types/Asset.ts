@@ -64,6 +64,10 @@ export class Asset {
 		return (scaledValue * this.price) / 1000
 	}
 
+	numeric_amount(): number {
+		return parseFloat(`${this.decimalAmount()}.${this.perThousandsFraction().toString()}`)
+	}
+
 	format_amount(): string {
 		const formatNumber = (x: BN) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 		return `${formatNumber(this.decimalAmount())}.${this.perThousandsFraction().toString().padStart(3, '0')}`

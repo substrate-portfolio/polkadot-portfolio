@@ -1,9 +1,12 @@
 import { ApiPromise } from '@polkadot/api';
 import React, { useCallback, useContext, useEffect, useMemo } from 'react';
+import { usePrevious } from '../../hooks/usePrevious';
 import { scrapeAccountFunds } from '../../services/scrapeAccount';
 import { AppContext } from '../../store';
 import { IAccount } from '../../store/store'
 import { Asset } from '../../store/types/Asset';
+import {isEqual} from 'lodash'
+import { currencyFormat } from '../../utils';
 
 interface AssetListProps {
   assets: Asset[]
@@ -25,7 +28,7 @@ const AssetItem = ({asset, accounts, apiRegistry}: AssetItemProps) => {
 
 
   return (
-    <div className='flex justify-between w-full mb-2 hover:bg-gray-50 border-b'>
+    <div className='flex justify-between w-full hover:bg-gray-50 border-b'>
       <span className='flex-1 w-full p-2'>{asset.token_name}</span>
       <span className='flex-1 w-full p-2'>{accountName}</span>
       <span className='flex-1 w-full p-2'>{asset.origin.chain}</span>
@@ -38,11 +41,11 @@ const AssetItem = ({asset, accounts, apiRegistry}: AssetItemProps) => {
 
 const AssetList = ({assets, accounts, apiRegistry}: AssetListProps) => {
   const filteredAssets = useMemo(() => 
-    assets.filter((item) => parseInt(item.format_amount()) > 0)
+    assets.filter((item) => item.numeric_amount() > 0)
   , [assets])
 
-  if(assets.length <= 0) return (
-    <div>No Asset found</div>
+  if(filteredAssets.length <= 0) return (
+    <div className='px-4 py-4 text-lg text-center'>No Valued Asset found</div>
   )
 
   return (
@@ -61,47 +64,20 @@ const AssetList = ({assets, accounts, apiRegistry}: AssetListProps) => {
 }
 
 const Assets = () => {
-  const {actions, state} = useContext(AppContext)
-  const {setLoading, setAssets} = actions
-  const {networks, accounts, apiRegistry, assets} = state;
+  const {state: {accounts, apiRegistry, assets}} = useContext(AppContext)
 
-  const totalAssetValuesInAllChains = useMemo(() => 
-    assets.reduce((sum, asset) => sum + asset.euroValue(), 0)
+  const totalAssetValuesInAllChains = useMemo(() => {
+    const sum = assets.reduce((sum, asset) => sum + asset.euroValue(), 0)
+    return currencyFormat(sum, 'EUR', 'en-US');
+  }
   , [assets])
-
-  const fetchAllAssets = useCallback(async (networks: string[], accounts: IAccount[], apiRegistry: Map<string, ApiPromise>): Promise<Asset[]> => {
-    setLoading(true);
-    let assets: Asset[] = [];
-    for (const networkWs of networks) {
-      const api = apiRegistry.get(networkWs)!;
-
-      (await Promise.allSettled(accounts.map(({id: account}) => scrapeAccountFunds(account, api)
-      ))).forEach((result) => {
-        if(result.status === "fulfilled") {
-          assets = assets.concat(result.value)
-        }
-      })
-    }
-    setLoading(false);
-    return assets;
-  }, []);
-
-  const refreshAssets = useCallback(async (networks: string[], accounts: IAccount[], apiRegistry: Map<string, ApiPromise>) => {
-    const assets = await fetchAllAssets(networks, accounts, apiRegistry);
-    setAssets(assets)
-  }, [fetchAllAssets, setAssets])
-  
-  useEffect(() => {
-    if(networks.length < 1 && accounts.length < 1) return;
-    refreshAssets(networks, accounts, apiRegistry);
-  }, [networks, accounts, apiRegistry]);
 
   return(
     <div>
       <div>
         <div className='p-4 border-b border-gray-200'>
           <div className='text-lg'>Total Asset Value in All Chains:</div>
-          <div className='text-4xl'><span className='mr-4'>{totalAssetValuesInAllChains}</span><span>Euro</span></div>
+          <div className='text-4xl'><span className='mr-4'>{totalAssetValuesInAllChains}</span></div>
         </div>
         <div>
           <AssetList assets={assets} accounts={accounts} apiRegistry={apiRegistry} />

@@ -92,21 +92,7 @@ const Networks = () => {
     setModalState(state)
   }, [])
 
-  const connect = async (networkUri: string): Promise<ApiPromise> => {
-    const provider = new WsProvider(networkUri);
-		const api = await ApiPromise.create({ provider });
-    return api;
-  }
-
-  const setupNetwork = async (network: string) => {
-    const api = await connect(network);
-    addApiRegistry(network, api)
-  }
-
-  React.useEffect(() => {
-    networks.forEach((network) => setupNetwork(network))
-  }, [networks])
-
+  
   return (
     <div className="p-4 flex flex-col">
       <div className="flex-none flex justify-between items-center mb-4">

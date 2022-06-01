@@ -42,3 +42,11 @@ export function findDecimals(api: ApiPromise, token: string): BN  {
 	const index = api.registry.chainTokens.findIndex((t) => t.toLowerCase() == token.toLowerCase());
 	return index > -1 ? new BN(api.registry.chainDecimals[index]): new BN(1);
 }
+
+export function currencyFormat(num: number, currency: string, locale: string): string {
+	const formatter = new Intl.NumberFormat(locale, {
+		style: 'currency',
+		currency,
+	});
+	return formatter.format(num)
+}

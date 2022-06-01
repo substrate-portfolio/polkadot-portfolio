@@ -1,9 +1,9 @@
 So on react app: (first version)
 [x] Load the networks from a list on startup
-[] Store accounts in local storage (or indexed db)
+[x] Store accounts in local storage (or indexed db)
 [x] Flat structure of the items
 [x] Show summary of the assets
 [] Remove the redundant stuff
 [] fix fetch coin values 
 [] filter by stuff
-[] update UI for better account management
+[x] update UI for better account management

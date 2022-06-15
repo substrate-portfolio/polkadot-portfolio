@@ -1,15 +1,16 @@
-import { useCallback, useContext, useEffect, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import { AppContext } from "../store";
+import { AppContext, outerAddApiRegistry } from "../store";
 import { Asset } from "../store/types/Asset";
-import { IAccount } from "../store/store";
+import { IAccount, LoadingScope } from "../store/store.d";
 import { scrapeAccountFunds } from "../services/scrapeAccount";
 import { usePrevious } from "./usePrevious";
 
-const useSyncNetworks = () => {
+const useSyncNetworks = (useTrigger: TriggerRefresh) => {
+  const [_, setRefresh] = useTrigger;
   const {state, actions} = useContext(AppContext);
   const { networks, apiRegistry } = state;
-  const { addApiRegistry } = actions;
+  const { addApiRegistry, setLoading } = actions;
   
   const connect = async (networkUri: string): Promise<ApiPromise> => {
     const provider = new WsProvider(networkUri);
@@ -17,19 +18,23 @@ const useSyncNetworks = () => {
     return api;
   }
 
-  const setupNetwork = async (network: string) => {
+  const setupNetwork = useCallback(async (network: string) => {
+    setLoading(true, LoadingScope.networks);
     const api = await connect(network);
     addApiRegistry(network, api)
-  }
+    setRefresh((prevState) => prevState + 1)
+    setLoading(false, LoadingScope.networks);
+  }, [])
 
   useEffect(() => {
-    networks.forEach((network) => {
+    for (let network of networks) {
       if(!apiRegistry.has(network)) setupNetwork(network)
-    })
-  }, [networks])
+    }
+  }, [networks, setupNetwork, apiRegistry])
 }
 
-const useSyncAssets = () => {
+const useSyncAssets = (useTrigger: TriggerRefresh) => {
+  const [refresh, _] = useTrigger;
   const {actions: {setLoading, setAssets}, state} = useContext(AppContext)
   const {networks, accounts, apiRegistry} = state
   
@@ -37,7 +42,7 @@ const useSyncAssets = () => {
   const prevAccountsSize = usePrevious(accounts.length ?? 0)
 
   const fetchAllAssets = useCallback(async (networks: string[], accounts: IAccount[], apiRegistry: Map<string, ApiPromise>): Promise<Asset[]> => {
-    setLoading(true);
+    setLoading(true, LoadingScope.assets);
     let assets: Asset[] = [];
     for (const networkWs of networks) {
       const api = apiRegistry.get(networkWs)!;
@@ -49,7 +54,7 @@ const useSyncAssets = () => {
         }
       })
     }
-    setLoading(false);
+    setLoading(false, LoadingScope.assets);
     return assets;
   }, []);
 
@@ -59,15 +64,18 @@ const useSyncAssets = () => {
   }, [fetchAllAssets, setAssets])
   
   useEffect(() => {
-    if(apiRegistry.size !== prevRegistrySize || accounts.length !== prevAccountsSize) {
+    if((apiRegistry.size !== prevRegistrySize) || (accounts.length !== prevAccountsSize)) {
       refreshAssets(networks, accounts, apiRegistry);
     }
-  }, [networks, accounts, apiRegistry, prevRegistrySize, prevAccountsSize]);
+  }, [networks, accounts, apiRegistry, prevRegistrySize, prevAccountsSize, refresh]);
 }
 
+type TriggerRefresh = [number, React.Dispatch<React.SetStateAction<number>>]
+
 const useBackgroundFetch = () => {
-  useSyncNetworks();
-  useSyncAssets();
+  const triggerRefresh: TriggerRefresh = useState(0)
+  useSyncNetworks(triggerRefresh);
+  useSyncAssets(triggerRefresh);
 }
 
 export default useBackgroundFetch;

@@ -1,7 +1,7 @@
 import React, { useReducer } from 'react';
 import { getLocalStorage, setLocalStorage } from '../utils/localStorage';
 import AppReducer, { ActionTypes } from './reducer/AppReducer';
-import { FAddAccount, FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IAccount, IActionList, IAppContext, StoreState } from './store';
+import { FAddAccount, FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IActionList, IAppContext, StoreState } from './store';
 
 const INITIAL_NETWORKS = ["wss://kusama-rpc.polkadot.io",
 "wss://rpc.polkadot.io",
@@ -31,6 +31,16 @@ export const defaultContext = {
 } as IAppContext
 
 export const AppContext = React.createContext(defaultContext);
+
+export const outerAddApiRegistry: FAddApiRegistry = (network, registry) => {
+  return({
+    type: ActionTypes.AddRegistry,
+    payload: {
+      network,
+      registry
+    },
+  })
+}
 
 export const AppContextProvider = ({ children } : {children: any}) => {
   const [state, dispatch]: [StoreState, any] = useReducer(AppReducer, initialState)
@@ -63,10 +73,13 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     })
   }
 
-  const setLoading: FSetLoading = (state) => {
+  const setLoading: FSetLoading = (loadingState, scope) => {
     dispatch({
       type: ActionTypes.SetLoadingState,
-      payload: state,
+      payload: {
+        loadingState,
+        scope
+      },
     })
   }
 

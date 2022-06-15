@@ -1,10 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import React, { useContext } from "react";
+import React, { useContext, useMemo } from "react";
 import { AppContext } from "../../store";
 
 const Header = () => {
   const {state: {loading}} = useContext(AppContext);
+
+  const anyLoading = useMemo(() => Object.values(loading).reduce((sum, state) => state || sum, false), [loading])
 
   return(
     <div className="relative">
@@ -14,8 +16,8 @@ const Header = () => {
             <a href="#">
               <span className="font-bold font-sans tracking-widest uppercase">Asset Portfolio</span>
             </a>
-            {loading ? <span>
-              <FontAwesomeIcon icon={faSpinner} spin={loading} />
+            {anyLoading ? <span>
+              <FontAwesomeIcon icon={faSpinner} spin={anyLoading} />
             </span>
   : null } 
           </div>

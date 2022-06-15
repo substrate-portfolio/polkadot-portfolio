@@ -1,6 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { IAccount, StoreState } from "../store";
-import { PerChain } from "../types";
+import { IAccount, LoadingScope, StoreState } from "../store";
 import { Asset } from "../types/Asset";
 
 export interface IAppReducer {
@@ -14,7 +13,7 @@ export enum ActionTypes {
   RemoveAccount = "RemoveAccount",
   SetLoadingState = "SetLoadingState",
   AddRegistry = "AddRegistry",
-  RemoveRegistry = "AddRegistry",
+  RemoveRegistry = "RemoveRegistry",
   SetAssets = "SetAssets",
 }
 
@@ -43,9 +42,12 @@ const removeNetwork = (state: StoreState, network: string): StoreState => ({
   networks: state.networks.filter(item => item !== network)
 })
 
-const setLoadingState = (state: StoreState, loading: boolean): StoreState => ({
+const setLoadingState = (state: StoreState, loadingState: boolean, scope: LoadingScope): StoreState => ({
   ...state,
-  loading
+  loading: {
+    ...state.loading,
+    [scope]: loadingState
+  }
 })
 
 const addRegistry = (state: StoreState, network: string, registry: ApiPromise): StoreState => ({
@@ -75,7 +77,7 @@ const AppReducer = (state: StoreState, action: IAction): StoreState => {
     case ActionTypes.RemoveNetwork: 
       return removeNetwork(state, action.payload)
     case ActionTypes.SetLoadingState: 
-      return setLoadingState(state, action.payload)
+      return setLoadingState(state, action.payload.loadingState, action.payload.scope)
     case ActionTypes.AddRegistry:
       return addRegistry(state, action.payload.network, action.payload.registry)
     case ActionTypes.RemoveRegistry:

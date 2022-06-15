@@ -5,6 +5,7 @@ import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_crowdloan, f
 import { Asset, Summary } from "./types";
 import yargs from 'yargs';
 import { hideBin } from "yargs/helpers"
+import { priceOf } from "./utils";
 
 const optionsPromise = yargs(hideBin(process.argv))
 	.option('accounts', {
@@ -77,6 +78,7 @@ async function main() {
 		const provider = new WsProvider(uri);
 		const api = await ApiPromise.create({ provider });
 		console.log(`✅ Connected to ${uri} / decimals: ${api.registry.chainDecimals.toString()} / tokens ${api.registry.chainTokens} / [ss58: ${api.registry.chainSS58}]`);
+		const _price = await priceOf(api.registry.chainTokens[0]);
 		apiRegistry.set(uri, api);
 	}));
 
@@ -89,8 +91,25 @@ async function main() {
 		}))).forEach((accountAssets) => allAssets = allAssets.concat(accountAssets))
 	}
 
-	const finalSummary = new Summary(allAssets);
+	accountConfig.stashes.forEach(([account, name]) => {
+		const accountAssets = allAssets.filter((a) => a.origin.account == account);
+		const summary = new Summary(accountAssets);
+		console.log(`#########`)
+		console.log(`# Summary of ${account} / ${name}:\n${summary.stringify()}`)
+		console.log(`#########`)
+	})
 
+	await accountConfig.networks.forEach(async (networkWs) => {
+		const api = apiRegistry.get(networkWs)!;
+		const chain = (await api.rpc.system.chain()).toString();
+		const chainAssets = allAssets.filter((a) => a.origin.chain == chain);
+		const summary = new Summary(chainAssets);
+		console.log(`#########`)
+		console.log(`# Summary of chain ${chain} :\n${summary.stringify()}`)
+		console.log(`#########`)
+	})
+
+	const finalSummary = new Summary(allAssets);
 	console.log(`#########`)
 	console.log(`# Final Summary:\n${finalSummary.stringify()}`)
 	console.log(`#########`)

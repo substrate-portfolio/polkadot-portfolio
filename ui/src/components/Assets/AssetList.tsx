@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from "react"
 import { IAccount } from "../../store/store"
 import { Asset } from "../../store/types/Asset"
 import { currencyFormat } from "../../utils"
-import { AssetSortOrders, tableHeads } from "../../utils/constants"
+import { AssetGroups, tableHeads } from "../../utils/constants"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleUp, faAngleDown } from '@fortawesome/free-solid-svg-icons'
 
@@ -11,6 +11,7 @@ interface AssetListProps {
   assets: Asset[]
   accounts: IAccount[]
   apiRegistry: Map<string, ApiPromise>
+  groupBy: AssetGroups | null;
 }
 
 interface AssetItemProps {
@@ -48,25 +49,25 @@ export const AssetItem = ({asset, accounts, apiRegistry}: AssetItemProps) => {
 
 const filterZeroAmount = (item: Asset) => item.numeric_amount() > 0
 
-const sortTable = (sortOrder: AssetSortOrders, asc: boolean) => (a: Asset, b: Asset): number => {
+const sortTable = (sortOrder: AssetGroups, asc: boolean) => (a: Asset, b: Asset): number => {
   let orderNumber: number;
   switch (sortOrder) {
-    case AssetSortOrders.Token:
+    case AssetGroups.Token:
       orderNumber = b.token_name.localeCompare(a.token_name)
       break;
-    case AssetSortOrders.Account:
+    case AssetGroups.Account:
       orderNumber = b.origin.account.localeCompare(a.origin.account)
       break;
-    case AssetSortOrders.Chain:
+    case AssetGroups.Chain:
       orderNumber = b.origin.chain.localeCompare(a.origin.chain)
       break;
-    case AssetSortOrders.Source:
+    case AssetGroups.Source:
       orderNumber = b.origin.source.localeCompare(a.origin.source)
       break;
-    case AssetSortOrders.Amount:
+    case AssetGroups.Amount:
       orderNumber = b.numeric_amount() - a.numeric_amount()
       break;
-    case AssetSortOrders.Value:
+    case AssetGroups.Value:
       orderNumber = b.euroValue() - a.euroValue()
       break;
   }
@@ -75,14 +76,35 @@ const sortTable = (sortOrder: AssetSortOrders, asc: boolean) => (a: Asset, b: As
   return orderNumber;
 }
 
+// TODO: IT WAS BIGGER THAN I INITIALLY THOUGHT, GOING TO IMPLEMENT IT LATER.
+// const groupAssetsBy = (assetGroup: AssetGroups) => (sum: Asset[], asset: Asset, index: number): Asset[] => {
+//   switch (assetGroup) {
+//     case AssetGroups.Token:
+//       break;
+//     case AssetGroups.Account:
+//       break;
+//     case AssetGroups.Chain:
+//       break;
+//     case AssetGroups.Source:
+//       break;
+//     case AssetGroups.Amount:
+//       break;
+//     case AssetGroups.Value:
+//       break;
+//   }
+// }
+
 export const AssetList = ({assets, accounts, apiRegistry}: AssetListProps) => {
-  const [sortOrder, setSortOrder] = useState<AssetSortOrders>(AssetSortOrders.Value)
+  const [sortOrder, setSortOrder] = useState<AssetGroups>(AssetGroups.Value)
   const [asc, setAsc] = useState<boolean>(false)
-  const filteredAssets = useMemo(() => 
-    assets.filter(filterZeroAmount).sort(sortTable(sortOrder, asc))
+  const filteredAssets = useMemo(() => {
+    return assets.filter(filterZeroAmount).sort(sortTable(sortOrder, asc))
+    // if(!groupBy) return sortedAndFiltered;
+    // return sortedAndFiltered.reduce(groupAssetsBy(groupBy), [])
+  }
   , [assets, sortOrder, asc])
 
-  const updateSortOrder = useCallback((order: AssetSortOrders) => () => {
+  const updateSortOrder = useCallback((order: AssetGroups) => () => {
     if(sortOrder === order) setAsc((prev) => !prev)
     else {
       setSortOrder(order)
@@ -102,10 +124,10 @@ export const AssetList = ({assets, accounts, apiRegistry}: AssetListProps) => {
           <span
             key={`${index}__${th.title.toLowerCase()}`}
             className={styles.tableHead} 
-            onClick={updateSortOrder(th.sortOrder)}
+            onClick={updateSortOrder(th.assetGroup)}
           >
             {th.title}
-            {sortOrder === th.sortOrder ? <FontAwesomeIcon icon={asc ? faAngleUp : faAngleDown} size="xs" className="text-slate-700" /> : null}
+            {sortOrder === th.assetGroup ? <FontAwesomeIcon icon={asc ? faAngleUp : faAngleDown} size="xs" className="text-slate-700" /> : null}
           </span>
         )
       )}

@@ -1,9 +1,10 @@
-import { faClose, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faClose, faPlus, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ApiPromise, WsProvider } from "@polkadot/api";
+import { ApiPromise } from "@polkadot/api";
+import classNames from "classnames";
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import { AppContext } from "../../store";
-import { FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork } from "../../store/store";
+import { FAddNetwork, FChangeVisibility, FRemoveApiRegistry, FRemoveNetwork, IVisibility } from "../../store/store";
 import Modal from "../Modal";
 import ModalBox from "../ModalBox";
 
@@ -11,20 +12,30 @@ interface NetworkItemProps {
   key: string,
   network: string,
   registry: ApiPromise | undefined,
+  visibility: IVisibility,
   disconnect: (network: string) => () => void,
+  handleVisibility: (network: string) => () => void,
 }
 
-const NetworkItem = ({key, network, registry, disconnect}: NetworkItemProps) => {
+const NetworkItem = ({key, network, visibility, registry, disconnect, handleVisibility}: NetworkItemProps) => {
   const networkName = useMemo(() => registry?.runtimeChain ?? network, [network, registry])
+  const {networks: hiddenNetworks} = visibility;
   const isConnected = useMemo(() => registry?.isConnected, [registry])
   return (
     <div key={key}>
       <div className="flex items-center py-1">
         <span className={`w-3 h-3 rounded-full mr-4 inline-block ${isConnected ? 'bg-green-600' : 'bg-orange-500'}`}></span>
         <span className="flex-1 inline-block">{networkName.length > 20 ? `${networkName.slice(0,20)}...` : networkName}</span>
-        <span className="px-2 rounded-full bg-red-100 hover:bg-red-300 cursor-pointer" onClick={disconnect(network)}>
-          <FontAwesomeIcon icon={faClose} size="xs" className="text-red-800" />
-        </span>
+        <div className="inline-flex items-center">
+          <div className="px-2 mr-2 rounded-ful cursor-pointer" onClick={handleVisibility(network)}>
+            <FontAwesomeIcon icon={hiddenNetworks.includes(network) ? faEyeSlash : faEye} size="xs" className={classNames("text-gray-600 hover:text-cyan-500", {
+              "text-cyan-500": hiddenNetworks.includes(network)
+            })} />
+          </div>
+          <div className="px-2 rounded-full bg-red-100 hover:bg-red-300 cursor-pointer" onClick={disconnect(network)}>
+            <FontAwesomeIcon icon={faClose} size="xs" className="text-red-800" />
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -32,23 +43,29 @@ const NetworkItem = ({key, network, registry, disconnect}: NetworkItemProps) => 
 
 interface NetworksListProps {
   networks: string[]
-  registry: Map<string, ApiPromise>
+  registry: Map<string, ApiPromise>,
+  visibility: IVisibility,
   removeNetwork: FRemoveNetwork,
   removeRegistry: FRemoveApiRegistry,
+  changeVisibility: FChangeVisibility,
 }
 
 const NetworksList = (props: NetworksListProps) => {
-  const {networks, registry, removeNetwork, removeRegistry} = props;
+  const {networks, registry, visibility, removeNetwork, removeRegistry, changeVisibility} = props;
 
   const handleDisconnect = useCallback((network: string) => () => {
     removeNetwork(network)
     removeRegistry(network)
   }, [removeNetwork])
 
+  const handleVisibility = useCallback((network: string) => () => {
+    changeVisibility(null, network)
+  }, [changeVisibility])
+
   if(networks.length) return (
     <div>
       {networks.map((network, index) => 
-        <NetworkItem network={network} registry={registry.get(network)} disconnect={handleDisconnect} key={`${index}_${network}`} />
+        <NetworkItem network={network} visibility={visibility} registry={registry.get(network)} disconnect={handleDisconnect} handleVisibility={handleVisibility} key={`${index}_${network}`} />
       )}
     </div>
   )
@@ -84,8 +101,8 @@ const NetworksSetting = (props: AddNetworkProps) => {
 
 const Networks = () => {
   const {state, actions} = useContext(AppContext);
-  const { networks, apiRegistry } = state;
-  const {removeNetwork, addNetwork, addApiRegistry, removeApiRegistry} = actions;
+  const { networks, apiRegistry, visibility } = state;
+  const {removeNetwork, addNetwork, changeVisibility, removeApiRegistry} = actions;
   const [modalOpen, setModalState] = useState(false)
   
   const handleModalState = React.useCallback((state: boolean) => () => {
@@ -105,7 +122,7 @@ const Networks = () => {
           <FontAwesomeIcon className="ml-2" icon={faPlus} size="xs" color="white" /></button>
       </div>
       <div className="flex-1">
-        <NetworksList networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
+        <NetworksList  visibility={visibility} changeVisibility={changeVisibility} networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
       </div>
       <Modal closeFn={handleModalState(false)} state={modalOpen}>
         <NetworksSetting addNetwork={addNetwork} />

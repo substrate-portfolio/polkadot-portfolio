@@ -1,7 +1,7 @@
 import React, { useReducer } from 'react';
 import { getLocalStorage, setLocalStorage } from '../utils/localStorage';
 import AppReducer, { ActionTypes } from './reducer/AppReducer';
-import { FAddAccount, FAddApiRegistry, FAddNetwork, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IActionList, IAppContext, StoreState } from './store';
+import { FAddAccount, FAddApiRegistry, FAddNetwork, FChangeVisibility, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IActionList, IAppContext, IVisibility, StoreState } from './store';
 
 const INITIAL_NETWORKS = ["wss://kusama-rpc.polkadot.io",
 "wss://rpc.polkadot.io",
@@ -22,6 +22,10 @@ export const initialState = {
   networks: getLocalStorage(NETWORK_KEY) ?? INITIAL_NETWORKS,
   assets: [],
   apiRegistry: new Map(),
+  visibility: {
+    networks: [],
+    accounts: [],
+  } as IVisibility,
   loading: false,
 } as StoreState
 
@@ -107,6 +111,16 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     })
   }
 
+  const changeVisibility: FChangeVisibility = (account = null, network = null) => {
+    dispatch({
+      type: ActionTypes.ChangeVisibility,
+      payload: {
+        account,
+        network,
+      },
+    })
+  }
+
   const actions = {
     addNetwork,
     removeNetwork,
@@ -115,7 +129,8 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     setLoading,
     addApiRegistry,
     removeApiRegistry,
-    setAssets
+    setAssets,
+    changeVisibility
   } as IActionList
 
   const context = {

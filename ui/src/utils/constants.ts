@@ -1,4 +1,4 @@
-export enum AssetSortOrders {
+export enum AssetGroups {
   Token,
   Account,
   Chain,
@@ -9,25 +9,25 @@ export enum AssetSortOrders {
 
 interface TTableHeads {
   title: string,
-  sortOrder: AssetSortOrders
+  assetGroup: AssetGroups
 }
 
 export const tableHeads: TTableHeads[] = [{
   title: 'Token Name',
-  sortOrder: AssetSortOrders.Token
+  assetGroup: AssetGroups.Token
 },{
   title: 'Account Name',
-  sortOrder: AssetSortOrders.Account
+  assetGroup: AssetGroups.Account
 }, {
   title: 'Chain',
-  sortOrder: AssetSortOrders.Chain
+  assetGroup: AssetGroups.Chain
 }, {
   title: 'Source',
-  sortOrder: AssetSortOrders.Source
+  assetGroup: AssetGroups.Source
 }, {
   title: 'Amount',
-  sortOrder: AssetSortOrders.Amount
+  assetGroup: AssetGroups.Amount
 }, {
   title: 'Value',
-  sortOrder: AssetSortOrders.Value
+  assetGroup: AssetGroups.Value
 }]

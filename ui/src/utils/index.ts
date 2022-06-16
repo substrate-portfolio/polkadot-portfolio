@@ -39,7 +39,7 @@ export async function priceOf(token: string): Promise<number> {
 }
 
 export function findDecimals(api: ApiPromise, token: string): BN  {
-	const index = api.registry.chainTokens.findIndex((t) => t.toLowerCase() == token.toLowerCase());
+	const index = api.registry.chainTokens.findIndex((t) => t.toLowerCase() === token.toLowerCase());
 	return index > -1 ? new BN(api.registry.chainDecimals[index]): new BN(1);
 }
 

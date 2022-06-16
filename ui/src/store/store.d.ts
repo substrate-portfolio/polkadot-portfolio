@@ -6,7 +6,13 @@ export interface StoreState {
   networks: string[],
   apiRegistry: Map<string, ApiRegistry>,
   assets: Asset[],
+  visibility: IVisibility,
   loading: LoadingStates,
+}
+
+export interface IVisibility {
+  networks: string[],
+  accounts: string[],
 }
 
 export interface IAppContext {
@@ -38,6 +44,7 @@ export interface IActionList {
   addApiRegistry: FAddApiRegistry,
   removeApiRegistry: FRemoveApiRegistry,
   setAssets: FSetAssets,
+  changeVisibility: FChangeVisibility,
 }
 
 export type FAddNetwork = (network: string) => void
@@ -48,3 +55,4 @@ export type FSetLoading = (state: boolean, scope: LoadingScope) => void
 export type FAddApiRegistry = (network: string, registry: ApiPromise) => void
 export type FRemoveApiRegistry = (network: string) => void
 export type FSetAssets = (assets: Asset[]) => void
+export type FChangeVisibility = (account?: string | null, network?: string | null) => void

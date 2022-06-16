@@ -15,6 +15,7 @@ export enum ActionTypes {
   AddRegistry = "AddRegistry",
   RemoveRegistry = "RemoveRegistry",
   SetAssets = "SetAssets",
+  ChangeVisibility = "ChangeVisibility",
 }
 
 export interface IAction {
@@ -27,10 +28,18 @@ const addAccount = (state: StoreState, payload: IAccount): StoreState => ({
   accounts: [...state.accounts, payload]
 })
 
-const removeAccount = (state: StoreState, accountId: string): StoreState => ({
-  ...state,
-  accounts: state.accounts.filter(item => item.id !== accountId)
-})
+const removeAccount = (state: StoreState, accountId: string): StoreState => {
+  const {visibility: {accounts}} = state    
+  const updatedAccounts = accounts.includes(accountId) ? accounts.filter((item) => item !== accountId) : accounts
+  return({
+    ...state,
+    accounts: state.accounts.filter(item => item.id !== accountId),
+    visibility: {
+      ...state.visibility,
+      accounts: updatedAccounts,
+    }
+  })
+}
 
 const addNetwork = (state: StoreState, network: string): StoreState => ({
   ...state,
@@ -57,13 +66,42 @@ const addRegistry = (state: StoreState, network: string, registry: ApiPromise): 
 
 const removeRegistry = (state: StoreState, network: string): StoreState => {
   state.apiRegistry.delete(network)
-  return state
+  const {visibility: {networks}} = state    
+  const updatedNetworks = networks.includes(network) ? networks.filter((item) => item !== network) : networks
+  return {
+    ...state,
+    visibility: {
+      ...state.visibility,
+      networks: updatedNetworks,
+    }
+  }
 }
 
 const setAssets = (state: StoreState, assets: Asset[]): StoreState => ({
   ...state,
   assets,
 })
+
+const changeVisibility = (state:StoreState, network: string | null, account: string | null): StoreState => {
+  const {visibility} = state;
+  const {networks, accounts} = visibility
+  let updatedNetworks : string[] = networks, updatedAccounts : string[] = accounts;
+  if(network) {
+    const hasNetwork = networks.includes(network)
+    updatedNetworks = hasNetwork ? networks.filter((item) => item !== network) : [...networks, network]
+  }
+  if(account) {
+    const hasAccount = accounts.includes(account)
+    updatedAccounts = hasAccount ? accounts.filter((item) => item !== account) : [...accounts, account]
+  }
+  return {
+    ...state,
+    visibility: {
+      networks: updatedNetworks,
+      accounts: updatedAccounts,
+    }
+  }
+}
 
 
 const AppReducer = (state: StoreState, action: IAction): StoreState => {
@@ -84,6 +122,8 @@ const AppReducer = (state: StoreState, action: IAction): StoreState => {
       return removeRegistry(state, action.payload)
     case ActionTypes.SetAssets:
       return setAssets(state, action.payload)
+    case ActionTypes.ChangeVisibility:
+      return changeVisibility(state, action.payload.network, action.payload.account)
     default:
       return state;
   }

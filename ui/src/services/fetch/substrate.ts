@@ -6,7 +6,7 @@ import BN from "bn.js";
 import { Asset } from "../../store/types/Asset";
 import { priceOf } from "../../utils";
 
-export async function fetch_system(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
+export async function fetch_system(api: ApiPromise, network: string, account: string, chain: string): Promise<Asset[]> {
 	console.log("SYSETEM")
 	console.log(`account:${account}, chain: ${chain}`)
 	console.log("tokens", api.registry.chainTokens)
@@ -23,7 +23,7 @@ export async function fetch_system(api: ApiPromise, account: string, chain: stri
 			transferrable: true,
 			amount: accountData.data.free,
 			decimals,
-			origin: { account, chain, source: "system pallet" }
+			origin: { account, chain, network, source: "system pallet" }
 		}),
 		new Asset({
 			name: `reserved_${token_name}`,
@@ -32,13 +32,13 @@ export async function fetch_system(api: ApiPromise, account: string, chain: stri
 			transferrable: false,
 			amount: accountData.data.reserved,
 			decimals,
-			origin: { account, chain, source: "system pallet" }
+			origin: { account, chain, network, source: "system pallet" }
 		})
 	];
 	return assets
 }
 
-export async function fetch_crowdloan(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
+export async function fetch_crowdloan(api: ApiPromise, network: string, account: string, chain: string): Promise<Asset[]> {
 	console.log("CROWDLOAN")
 	console.log(`account:${account}, chain: ${chain}`)
 	console.log("tokens", api.registry.chainTokens)
@@ -63,7 +63,7 @@ export async function fetch_crowdloan(api: ApiPromise, account: string, chain: s
 						transferrable: false,
 						amount: contribution_amount,
 						decimals,
-						origin: { account, chain, source: "crowdloan pallet" }
+						origin: { account, chain, network, source: "crowdloan pallet" }
 					}
 				);
 				assets.push(asset)
@@ -76,7 +76,7 @@ export async function fetch_crowdloan(api: ApiPromise, account: string, chain: s
 	return assets
 }
 
-export async function fetch_assets(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
+export async function fetch_assets(api: ApiPromise, network: string, account: string, chain: string): Promise<Asset[]> {
 	console.log("ASSETS")
 	console.log(`account:${account}, chain: ${chain}`)
 	console.log("tokens", api.registry.chainTokens)
@@ -98,7 +98,7 @@ export async function fetch_assets(api: ApiPromise, account: string, chain: stri
 				transferrable: Boolean(assetAccount.unwrap().isFrozen),
 				amount: assetAccount.unwrap().balance,
 				decimals,
-				origin: { account, chain, source: "assets pallet" }
+				origin: { account, chain, network, source: "assets pallet" }
 			}))
 		}
 	});

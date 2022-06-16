@@ -7,6 +7,8 @@ export interface AssetOrigin {
 	account: string,
 	/// The chain to which it belongs.
 	chain: string,
+	/// The network address
+	network: string,
 	/// The source pallet from which this asset has been extracted.
 	source: string,
 }

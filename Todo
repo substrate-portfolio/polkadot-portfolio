@@ -4,11 +4,20 @@ So on react app: (first version)
 [x] Flat structure of the items
 [x] Show summary of the assets
 [x] update UI for better account management
-[] Remove the redundant stuff
-[] fix fetch coin values 
-[] filter by stuff
-[] Network and account input validation
+[x] Remove the redundant stuff
+[] fix fetch coin values (background fetch?)
+[x] Network input validation
+[] Account input validation
 [] Auto complete for networks
+
+Actions on Token Table:
+  [x] Sortable Table
+  [x] Filtering by Accounts 
+  [x] Filtering by Networks
+  [] Filtering small amounts
+  [] Filtering by Token Name
+  [] Filtering table by values 
+  [] Grouping stuff by headliners (harder)
 
 Feedback from Kian:
   Bugs: 

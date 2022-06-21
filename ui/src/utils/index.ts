@@ -15,13 +15,21 @@ const COIN_CHAIN_MAP: Map<string, string> = new Map(
 		["glmr", "moonbeam"],
 		["aca", "acala"],
 		["para", "par-stablecoin"],
-		["azero", "aleph-zero"]
+		["azero", "aleph-zero"],
+		["sub", "subsocial"],
+ 		["efi", "efinity"],
+ 		["cfg", "centrifuge"]
 	]
 )
 
 const PRICE_CACHE: Map<string, number> = new Map();
 
 export async function priceOf(token: string): Promise<number> {
+	// cater for xc-tokens in moonbeam.
+	if (token.startsWith('xc')) {
+		token = token.slice(2)
+	}
+
 	const tokenTransformed = COIN_CHAIN_MAP.has(token.toLowerCase()) ? COIN_CHAIN_MAP.get(token.toLowerCase())! : token.toLowerCase();
 	if (PRICE_CACHE.has(tokenTransformed)) {
 		return PRICE_CACHE.get(tokenTransformed)!

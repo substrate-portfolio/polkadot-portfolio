@@ -1,5 +1,4 @@
 import BN from "bn.js";
-import * as currencyFormatter from "currency-formatter";
 
 /// Origin of an asset.
 export interface AssetOrigin {

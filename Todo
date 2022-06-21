@@ -5,9 +5,9 @@ So on react app: (first version)
 [x] Show summary of the assets
 [x] update UI for better account management
 [x] Remove the redundant stuff
-[] fix fetch coin values (background fetch?)
 [x] Network input validation
-[] Account input validation
+[x] Account input validation
+[] fix fetch coin values (background fetch?)
 [] Auto complete for networks
 
 Actions on Token Table:

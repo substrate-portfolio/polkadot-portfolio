@@ -1,10 +1,10 @@
 import { ApiPromise } from "@polkadot/api";
 import BN from "bn.js";
-import { Asset } from "../types";
-import { priceOf } from "../utils";
+import { Asset } from "../../store/types/Asset";
+import { priceOf } from "../../utils";
 
 
-export async function fetch_crowdloan_rewards(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
+export async function fetch_crowdloan_rewards(api: ApiPromise, network: string, account: string, chain: string): Promise<Asset[]> {
 	const token_name = api.registry.chainTokens[0];
 	const price = await priceOf(chain);
 	// really wacky way of decoding shit...
@@ -23,7 +23,7 @@ export async function fetch_crowdloan_rewards(api: ApiPromise, account: string, 
 			transferrable: false,
 			amount: locked,
 			decimals,
-			origin: { account, chain, source: "crowdloan rewards pallet" }
+			origin: { account, chain, network, source: "crowdloan rewards pallet" }
 		})
 	]
 }

@@ -2,10 +2,10 @@ import "@polkadot/api-augment";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { readFileSync } from "fs";
 import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_crowdloan, fetch_assets, fetch_reward_pools,  } from "./fetch"
-import { PerAccount, PerChain, PerPallet, Summary } from "./types";
-import { priceOf } from "./utils";
+import { Asset, Summary } from "./types";
 import yargs from 'yargs';
 import { hideBin } from "yargs/helpers"
+import { priceOf } from "./utils";
 
 const optionsPromise = yargs(hideBin(process.argv))
 	.option('accounts', {
@@ -26,87 +26,92 @@ interface AccountsConfig {
 	stashes: [string, string][],
 }
 
-async function scrapeAccountFunds(account: string, name: string, nativeToken: string, price: number, api: ApiPromise): Promise<PerAccount> {
-	const perAccount = new PerAccount({ pallets: [], id: account, name });
+export async function scrape(account: string, api: ApiPromise): Promise<Asset[]> {
+	let assets: Asset[] = [];
+	const chain = (await api.rpc.system.chain()).toString();
+
 	try {
 		if (api.query.system) {
-			const system = await fetch_system(api, account, nativeToken, price);
-			perAccount.pallets.push(system)
+			const system = await fetch_system(api, account, chain);
+			assets = assets.concat(system)
 		}
 
 		if (api.query.crowdloanRewards) {
-			const system = await fetch_crowdloan_rewards(api, account, nativeToken, price);
-			perAccount.pallets.push(system)
-		}
-
-		if (api.query.vesting) {
-			// const vesting = await fetch_vesting(api, account, block_number);
+			const cRewards = await fetch_crowdloan_rewards(api, account, chain);
+			assets = assets.concat(cRewards)
 		}
 
 		if (api.query.crowdloan) {
-			const crowdloan = await fetch_crowdloan(api, account, nativeToken, price);
-			perAccount.pallets.push(crowdloan)
+			const crowdloan = await fetch_crowdloan(api, account, chain);
+			assets = assets.concat(crowdloan)
 		}
 
 		if (api.query.assets) {
-			const assets = await fetch_assets(api, account);
-			perAccount.pallets.push(assets);
+			const _assets = await fetch_assets(api, account, chain);
+			assets = assets.concat(_assets)
 		}
 
 		if (api.query.tokens) {
-			const assets = await fetch_tokens(api, account);
-			perAccount.pallets.push(assets);
+			const tokens = await fetch_tokens(api, account, chain);
+			assets = assets.concat(tokens)
 		}
 
 		if (api.query.rewards) {
-			const assets = await fetch_reward_pools(api, account);
-			perAccount.pallets.push(assets);
+			const rewardPools = await fetch_reward_pools(api, account, chain);
+			assets = assets.concat(rewardPools)
 		}
 	} catch(e) {
 		// console.error(`error while fetching ${account}/${name} on ${nativeToken}: ${e}`);
 		// throw(e)
 	}
 
-	return perAccount
+	return assets
 }
 
 async function main() {
 	// initialize `apiRegistry`.
 	const options = await optionsPromise;
 	const accountConfig: AccountsConfig = JSON.parse(readFileSync(options.accounts).toString());
+
+	// connect to all api endpoints.
 	await Promise.all(accountConfig.networks.map(async (uri: string) => {
 		const provider = new WsProvider(uri);
 		const api = await ApiPromise.create({ provider });
 		console.log(`✅ Connected to ${uri} / decimals: ${api.registry.chainDecimals.toString()} / tokens ${api.registry.chainTokens} / [ss58: ${api.registry.chainSS58}]`);
+		const _price = await priceOf(api.registry.chainTokens[0]);
 		apiRegistry.set(uri, api);
 	}));
 
-	const all_chains: PerChain[] = [];
+	let allAssets: Asset[] = [];
 	for (const networkWs of accountConfig.networks) {
 		const api = apiRegistry.get(networkWs)!;
-		const chain = (await api.rpc.system.chain()).toLowerCase();
 
-		const nativeToken = api.registry.chainTokens[0];
-		const price = await priceOf(nativeToken);
-
-		const chainAccounts: PerAccount[] = [];
 		(await Promise.all(accountConfig.stashes.map(([account, name]) => {
-			return scrapeAccountFunds(account, name, nativeToken, price, api)
-		}))).forEach((perAccount) => chainAccounts.push(perAccount))
-
-		const chainData = new PerChain({ accounts: chainAccounts, name: chain });
-		console.log(`⛓ ${chain}:`)
-		chainData.display();
-		all_chains.push(chainData);
+			return scrape(account, api);
+		}))).forEach((accountAssets) => allAssets = allAssets.concat(accountAssets))
 	}
 
+	accountConfig.stashes.forEach(([account, name]) => {
+		const accountAssets = allAssets.filter((a) => a.origin.account == account);
+		const summary = new Summary(accountAssets);
+		console.log(`#########`)
+		console.log(`# Summary of ${account} / ${name}:\n${summary.stringify()}`)
+		console.log(`#########`)
+	})
 
-	// UI MISHE
-	const all_assets = all_chains.flatMap((chain) => chain.accounts.flatMap((account) => account.pallets.flatMap((pallet) => pallet.assets)));
-	const final_summary = new Summary(all_assets);
+	await accountConfig.networks.forEach(async (networkWs) => {
+		const api = apiRegistry.get(networkWs)!;
+		const chain = (await api.rpc.system.chain()).toString();
+		const chainAssets = allAssets.filter((a) => a.origin.chain == chain);
+		const summary = new Summary(chainAssets);
+		console.log(`#########`)
+		console.log(`# Summary of chain ${chain} :\n${summary.stringify()}`)
+		console.log(`#########`)
+	})
 
+	const finalSummary = new Summary(allAssets);
 	console.log(`#########`)
-	console.log(`# Final Summary:\n${final_summary.stringify()}`)
+	console.log(`# Final Summary:\n${finalSummary.stringify()}`)
 	console.log(`#########`)
 }
 

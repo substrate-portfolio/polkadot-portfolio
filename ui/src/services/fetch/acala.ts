@@ -1,12 +1,13 @@
+// @ts-nocheck
 import { ApiPromise } from '@polkadot/api';
-import { Asset, AssetOrigin } from '../types';
+import { Asset, AssetOrigin } from '../../store/types/Asset';
 import { CurrencyId, PoolId, TradingPair, DexShare } from "@acala-network/types/interfaces/"
 import { OrmlAccountData } from "@open-web3/orml-types/interfaces/"
 import { types } from "@acala-network/types"
 import BN from 'bn.js';
-import { findDecimals, priceOf } from '../utils';
+import { findDecimals, priceOf } from '../../utils';
 
-async function findPriceOrCheckDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<number> {
+async function findPriceOrCheckDex(api: ApiPromise, network: string, x: CurrencyId, y: CurrencyId): Promise<number> {
 	const normal = await priceOf(formatCurrencyId(x));
 	if (normal > 0) {
 		return normal
@@ -20,7 +21,7 @@ const PRICE_CACHE: Map<string, number> = new Map();
 // find the price of an asset by looking into its dex value, when converted into another one. This
 // is useful to fund the price of something like LKSM, LC-DOT or LDOT. It takes `amount` of
 // `unknown` and returns
-async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<number> {
+async function findPriceViaDex(api: ApiPromise, network: string, x: CurrencyId, y: CurrencyId): Promise<number> {
 	if (PRICE_CACHE.has(formatCurrencyId(x)))  {
 		return PRICE_CACHE.get(formatCurrencyId(x))!
 	}
@@ -40,7 +41,7 @@ async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): P
 	return price
 }
 
-async function dexLiquidityOf(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<[BN, BN]> {
+async function dexLiquidityOf(api: ApiPromise, network: string, x: CurrencyId, y: CurrencyId): Promise<[BN, BN]> {
 	let [yTotal, xTotal]: [BN, BN] = [new BN(0), new BN(0)];
 	try {
 		[yTotal, xTotal] = await api.query.dex.liquidityPool([y.toHuman(), x.toHuman()])
@@ -100,7 +101,7 @@ function poolToName(pool: PoolId): string {
 	}
 }
 
-async function processToken(api: ApiPromise, token: CurrencyId, accountData: OrmlAccountData, origin: AssetOrigin): Promise<Asset | undefined> {
+async function processToken(api: ApiPromise, network: string, token: CurrencyId, accountData: OrmlAccountData, origin: AssetOrigin): Promise<Asset | undefined> {
 	if (token.isToken) {
 		const tokenName = token.asToken.toString();
 		const knownToken = api.createType('CurrencyId', { 'Token': api.registry.chainTokens[0] });
@@ -128,11 +129,11 @@ async function processToken(api: ApiPromise, token: CurrencyId, accountData: Orm
 			origin,
 		})
 	} else {
-		undefined
+		return undefined
 	}
 }
 
-export async function fetch_reward_pools(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
+export async function fetch_reward_pools(api: ApiPromise, network: string, account: string, chain: string): Promise<Asset[]> {
 	api.registerTypes(types);
 	const assets: Asset[] = [];
 
@@ -201,10 +202,10 @@ export async function fetch_reward_pools(api: ApiPromise, account: string, chain
 	return assets
 }
 
-export async function fetch_tokens(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
+export async function fetch_tokens(api: ApiPromise, network: string, account: string, chain: string): Promise<Asset[]> {
 	api.registerTypes(types)
 	const assets: Asset[] = [];
-	const origin: AssetOrigin = { account, chain, source: "tokens pallet" }
+	const origin: AssetOrigin = { account, chain, network, source: "tokens pallet" }
 	const entries = await api.query.tokens.accounts.entries(account);
 
 	for (const [key, token_data_raw] of entries) {

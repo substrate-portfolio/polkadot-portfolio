@@ -1,0 +1,26 @@
+So on react app: (first version)
+[x] Load the networks from a list on startup
+[x] Store accounts in local storage (or indexed db)
+[x] Flat structure of the items
+[x] Show summary of the assets
+[x] update UI for better account management
+[] Remove the redundant stuff
+[] fix fetch coin values 
+[] filter by stuff
+[] Network and account input validation
+[] Auto complete for networks
+
+Feedback from Kian:
+  Bugs: 
+    [x] Changing networks (adding/removing) should also re-trigger a scrape
+    [x] Progress bar is not accurate
+  
+  Features: 
+    [] Networks should have icons (hardcoded)
+    [] Accounts should have icon as well (https://github.com/polkadot-js/ui/tree/master/packages/react-identicon#readme). 
+    [x] Table should be sort-able 
+    [] Hovering on any token amount should show its decimal points, and the actual underlying value
+    [] Native assets and derivatives should be distinguished (task for Kian)
+    [x] Accounts and networks should have an option to be saved in local storage
+    [] We should have a list of hardcoded networks (copy pasta from polkadot.js/apps), and upon adding a new network, you should be able to just type “Polkadot” and it should potentially suggest a known ws endpoint for it.
+    [] Github deployment soon so we can shill it a bit and also request tips

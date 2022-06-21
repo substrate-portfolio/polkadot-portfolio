@@ -1,6 +1,6 @@
 import Header from "../../components/Header";
 import Networks from '../../components/Networks';
-import {AccountsList, AccountListModify, Accounts} from '../../components/Accounts';
+import {Accounts} from '../../components/Accounts';
 
 const Sidebar = () => {
   return (

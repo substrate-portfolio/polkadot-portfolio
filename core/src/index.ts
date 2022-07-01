@@ -78,6 +78,7 @@ async function main() {
 		const provider = new WsProvider(uri);
 		const api = await ApiPromise.create({ provider });
 		console.log(`✅ Connected to ${uri} / decimals: ${api.registry.chainDecimals.toString()} / tokens ${api.registry.chainTokens} / [ss58: ${api.registry.chainSS58}]`);
+		// this will just cache everything.
 		const _price = await priceOf(api.registry.chainTokens[0]);
 		apiRegistry.set(uri, api);
 	}));
@@ -85,7 +86,6 @@ async function main() {
 	let allAssets: Asset[] = [];
 	for (const networkWs of accountConfig.networks) {
 		const api = apiRegistry.get(networkWs)!;
-
 		(await Promise.all(accountConfig.stashes.map(([account, name]) => {
 			return scrape(account, api);
 		}))).forEach((accountAssets) => allAssets = allAssets.concat(accountAssets))
@@ -99,7 +99,7 @@ async function main() {
 		console.log(`#########`)
 	})
 
-	await accountConfig.networks.forEach(async (networkWs) => {
+	for (const networkWs of accountConfig.networks) {
 		const api = apiRegistry.get(networkWs)!;
 		const chain = (await api.rpc.system.chain()).toString();
 		const chainAssets = allAssets.filter((a) => a.origin.chain == chain);
@@ -107,7 +107,7 @@ async function main() {
 		console.log(`#########`)
 		console.log(`# Summary of chain ${chain} :\n${summary.stringify()}`)
 		console.log(`#########`)
-	})
+	}
 
 	const finalSummary = new Summary(allAssets);
 	console.log(`#########`)

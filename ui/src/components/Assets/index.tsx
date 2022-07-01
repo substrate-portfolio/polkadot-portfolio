@@ -2,13 +2,12 @@ import classNames from 'classnames';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { AppContext } from '../../store';
 import { IVisibility } from '../../store/store';
-import { Asset } from '../../store/types/Asset';
-import { currencyFormat } from '../../utils';
+import { Asset, currencyFormat } from 'polkadot-portfolio-core';
 import { AssetGroups, tableHeads } from '../../utils/constants';
 import { AssetList } from './AssetList';
 
-const filterVisibility = (visibility: IVisibility) => (item: Asset, index: number, array: Asset[]): boolean => 
-  !(visibility.accounts.includes(item.origin.account) || visibility.networks.includes(item.origin.network))
+const filterVisibility = (visibility: IVisibility) => (item: Asset, index: number, array: Asset[]): boolean =>
+  !(visibility.accounts.includes(item.origin.account) || visibility.networks.includes(item.origin.chain))
 
 const Assets = () => {
   const {state: {accounts, apiRegistry, assets, visibility}} = useContext(AppContext)
@@ -18,7 +17,7 @@ const Assets = () => {
     return currencyFormat(sum);
   }
   , [filteredAssets])
-  
+
   const [groupBy, setGroupBy] = useState<AssetGroups | null>(null)
   // const groupAssetsBy = useCallback((gb: AssetGroups | null) => () => {
   //   if(groupBy === gb) setGroupBy(null)

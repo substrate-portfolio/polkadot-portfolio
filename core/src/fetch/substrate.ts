@@ -6,7 +6,7 @@ import { Asset } from "../types";
 import { priceOf } from "../utils";
 
 export async function fetch_system(api: ApiPromise, account: string, chain: string): Promise<Asset[]> {
-	let token_name = api.registry.chainTokens[0];
+	const token_name = api.registry.chainTokens[0];
 	const price = await priceOf(token_name);
 	const accountData = await api.query.system.account(account);
 	const decimals = new BN(api.registry.chainDecimals[0]);

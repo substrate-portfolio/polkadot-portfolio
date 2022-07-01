@@ -71,6 +71,10 @@ export class Asset {
 		return `${token_amount} - ${currencyFormatter.format(eur_amount, { locale: "nl-NL" })}`
 	}
 
+	numeric_amount(): number {
+		return parseFloat(`${this.decimalAmount()}.${this.perThousandsFraction().toString()}`)
+	}
+
 	stringify(): string {
 		return `[${this.transferrable ? '🍺' : '🔐'}][${this.token_name}] ${this.name}: ${this.format_amount()}`
 	}

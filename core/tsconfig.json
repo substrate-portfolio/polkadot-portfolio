@@ -6,8 +6,8 @@
 			"es6"
 		],
 		"allowJs": true,
-		"outDir": "build",
-		"rootDir": "core/src",
+		"rootDir": "./src",
+
 		// Some compiling checks.
 		"strict": true,
 		"noImplicitAny": true,
@@ -21,7 +21,12 @@
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"outDir": "build",
+		"declarationMap": true
 	}
 }
 

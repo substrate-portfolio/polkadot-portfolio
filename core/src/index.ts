@@ -1,11 +1,12 @@
 import "@polkadot/api-augment";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { readFileSync } from "fs";
-import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_crowdloan, fetch_assets, fetch_reward_pools,  } from "./fetch"
+import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_crowdloan, fetch_assets, fetch_reward_pools, } from "./fetch"
 import { Asset, Summary } from "./types";
 import yargs from 'yargs';
 import { hideBin } from "yargs/helpers"
 import { priceOf } from "./utils";
+
 
 const optionsPromise = yargs(hideBin(process.argv))
 	.option('accounts', {
@@ -19,13 +20,15 @@ const optionsPromise = yargs(hideBin(process.argv))
 export const apiRegistry: Map<string, ApiPromise> = new Map();
 
 /**
- * Specification of a chain, as described in the JSON account file.
- */
+* Specification of a chain, as described in the JSON account file.
+*/
 interface AccountsConfig {
 	networks: string[],
 	stashes: [string, string][],
 }
 
+export * from "./utils";
+export { Asset } from "./types";
 export async function scrape(account: string, api: ApiPromise): Promise<Asset[]> {
 	let assets: Asset[] = [];
 	const chain = (await api.rpc.system.chain()).toString();
@@ -60,7 +63,7 @@ export async function scrape(account: string, api: ApiPromise): Promise<Asset[]>
 			const rewardPools = await fetch_reward_pools(api, account, chain);
 			assets = assets.concat(rewardPools)
 		}
-	} catch(e) {
+	} catch (e) {
 		// console.error(`error while fetching ${account}/${name} on ${nativeToken}: ${e}`);
 		// throw(e)
 	}

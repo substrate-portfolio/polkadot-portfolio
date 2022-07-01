@@ -1,16 +1,16 @@
 {
-	"name": "polkadot-js-api-ts-template",
+	"name": "polkadot-portfolio-core",
 	"version": "0.1.0",
-	"description": "A template project to kickstart hacking on top of @polkadot/api",
-	"main": "index.js",
+	"description": "Core engine to scrape the portfolio fo an account in the Polkadot ecosystem.",
+	"main": "build/index.js",
+	"types": "build/index.d.ts",
+
 	"scripts": {
-		"postinstall": "cd ui && npm install",
 		"dev": "./node_modules/.bin/nodemon --exec ./node_modules/.bin/ts-node ./src/index.ts",
 		"start": "./node_modules/.bin/ts-node ./src/index.ts",
-		"start-ui": "cd ui && npm start",
-		"update": "././node_modules/.bin/ncu -u && yarn",
+		"update": "./node_modules/.bin/ncu -u && yarn",
 		"lint": "eslint . --ext .ts --fix",
-		"build": "./node_modules/.bin/tsc --pretty && cd ui && npm run build"
+		"build": "./node_modules/.bin/tsc --pretty"
 	},
 	"author": "@kianenigma",
 	"license": "ISC",

@@ -1,20 +1,19 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { AppContext, outerAddApiRegistry } from "../store";
-import { Asset } from "../store/types/Asset";
 import { IAccount, LoadingScope } from "../store/store.d";
-import { scrapeAccountFunds } from "../services/scrapeAccount";
+import { scrape, Asset } from "polkadot-portfolio-core";
 import { usePrevious } from "./usePrevious";
 
 const useSyncNetworks = (useTrigger: TriggerRefresh) => {
   const [_, setRefresh] = useTrigger;
-  const {state, actions} = useContext(AppContext);
+  const { state, actions } = useContext(AppContext);
   const { networks, apiRegistry } = state;
   const { addApiRegistry, setLoading } = actions;
-  
+
   const connect = async (networkUri: string): Promise<ApiPromise> => {
     const provider = new WsProvider(networkUri);
-		const api = await ApiPromise.create({ provider });
+    const api = await ApiPromise.create({ provider });
     return api;
   }
 
@@ -27,17 +26,17 @@ const useSyncNetworks = (useTrigger: TriggerRefresh) => {
   }, [])
 
   useEffect(() => {
-    for (let network of networks) {
-      if(!apiRegistry.has(network)) setupNetwork(network)
+    for (const network of networks) {
+      if (!apiRegistry.has(network)) setupNetwork(network)
     }
   }, [networks, setupNetwork, apiRegistry])
 }
 
 const useSyncAssets = (useTrigger: TriggerRefresh) => {
   const [refresh, _] = useTrigger;
-  const {actions: {setLoading, setAssets}, state} = useContext(AppContext)
-  const {networks, accounts, apiRegistry} = state
-  
+  const { actions: { setLoading, setAssets }, state } = useContext(AppContext)
+  const { networks, accounts, apiRegistry } = state
+
   const prevRegistrySize = usePrevious(apiRegistry.size ?? 0)
   const prevAccountsSize = usePrevious(accounts.length ?? 0)
 
@@ -47,9 +46,9 @@ const useSyncAssets = (useTrigger: TriggerRefresh) => {
     for (const networkWs of networks) {
       const api = apiRegistry.get(networkWs)!;
 
-      (await Promise.allSettled(accounts.map(({id: account}) => scrapeAccountFunds(account, networkWs, api)
+      (await Promise.allSettled(accounts.map(({ id: account }) => scrape(account, api)
       ))).forEach((result) => {
-        if(result.status === "fulfilled") {
+        if (result.status === "fulfilled") {
           assets = assets.concat(result.value)
         }
       })
@@ -62,9 +61,9 @@ const useSyncAssets = (useTrigger: TriggerRefresh) => {
     const assets = await fetchAllAssets(networks, accounts, apiRegistry);
     setAssets(assets)
   }, [fetchAllAssets, setAssets])
-  
+
   useEffect(() => {
-    if((apiRegistry.size !== prevRegistrySize) || (accounts.length !== prevAccountsSize)) {
+    if ((apiRegistry.size !== prevRegistrySize) || (accounts.length !== prevAccountsSize)) {
       refreshAssets(networks, accounts, apiRegistry);
     }
   }, [networks, accounts, apiRegistry, prevRegistrySize, prevAccountsSize, refresh]);

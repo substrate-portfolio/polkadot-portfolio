@@ -1,21 +1,21 @@
 export enum AssetGroups {
-  Token,
-  Account,
-  Chain,
-  Source,
-  Amount,
-  Value
+	Token,
+	Account,
+	Chain,
+	Source,
+	Amount,
+	Value
 }
 
 interface TTableHeads {
-  title: string,
-  assetGroup: AssetGroups
+	title: string,
+	assetGroup: AssetGroups
 }
 
 export const tableHeads: TTableHeads[] = [{
   title: 'Token Name',
   assetGroup: AssetGroups.Token
-},{
+}, {
   title: 'Account Name',
   assetGroup: AssetGroups.Account
 }, {

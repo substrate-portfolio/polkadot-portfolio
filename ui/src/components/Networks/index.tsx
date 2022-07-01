@@ -7,21 +7,21 @@ import NetworksSetting from "./NetworkSettings";
 import NetworksList from "./NetworksList";
 
 const Networks = () => {
-  const {state, actions} = useContext(AppContext);
+  const { state, actions } = useContext(AppContext);
   const { networks, apiRegistry, visibility } = state;
-  const {removeNetwork, addNetwork, changeVisibility, removeApiRegistry} = actions;
+  const { removeNetwork, addNetwork, changeVisibility, removeApiRegistry } = actions;
   const [modalOpen, setModalState] = useState(false)
-  
+
   const handleModalState = React.useCallback((state: boolean) => () => {
     setModalState(state)
   }, [])
 
-  
+
   return (
     <div className="p-4 flex flex-col">
       <div className="flex-none flex justify-between items-center mb-4">
         <span className="font-semibold inline-flex text-xl text-slate-600">Chains</span>
-        <button 
+        <button
           className="inline-flex items-center rounded-md bg-green-500 hover:bg-green-700 text-center text-sm py-2 px-2 appearance-none text-white"
           onClick={handleModalState(true)}
         >
@@ -29,7 +29,7 @@ const Networks = () => {
           <FontAwesomeIcon className="ml-2" icon={faPlus} size="xs" color="white" /></button>
       </div>
       <div className="flex-1">
-        <NetworksList  visibility={visibility} changeVisibility={changeVisibility} networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork}/>
+        <NetworksList visibility={visibility} changeVisibility={changeVisibility} networks={networks} removeRegistry={removeApiRegistry} registry={apiRegistry} removeNetwork={removeNetwork} />
       </div>
       <Modal closeFn={handleModalState(false)} state={modalOpen}>
         <NetworksSetting addNetwork={addNetwork} />

@@ -1,23 +1,22 @@
 import { ApiPromise } from "@polkadot/api"
 import { useCallback, useMemo, useState } from "react"
 import { IAccount } from "../../store/store"
-import { Asset } from "../../store/types/Asset"
-import { currencyFormat } from "../../utils"
+import { Asset, currencyFormat } from "polkadot-portfolio-core"
 import { AssetGroups, tableHeads } from "../../utils/constants"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleUp, faAngleDown } from '@fortawesome/free-solid-svg-icons'
 
 interface AssetListProps {
-  assets: Asset[]
-  accounts: IAccount[]
-  apiRegistry: Map<string, ApiPromise>
-  groupBy: AssetGroups | null;
+	assets: Asset[]
+	accounts: IAccount[]
+	apiRegistry: Map<string, ApiPromise>
+	groupBy: AssetGroups | null;
 }
 
 interface AssetItemProps {
-  asset: Asset
-  accounts: IAccount[]
-  apiRegistry: Map<string, ApiPromise>
+	asset: Asset
+	accounts: IAccount[]
+	apiRegistry: Map<string, ApiPromise>
 }
 
 const styles = {
@@ -28,7 +27,7 @@ const styles = {
   tableBody: 'flex justify-between w-full border-b-2'
 }
 
-export const AssetItem = ({asset, accounts, apiRegistry}: AssetItemProps) => {
+export const AssetItem = ({ asset, accounts, apiRegistry }: AssetItemProps) => {
   const accountName = useMemo(() => {
     const account = accounts.find((item) => item.id == asset.origin.account)
     return account?.name ?? ''
@@ -52,27 +51,27 @@ const filterZeroAmount = (item: Asset) => item.numeric_amount() > 0
 const sortTable = (sortOrder: AssetGroups, asc: boolean) => (a: Asset, b: Asset): number => {
   let orderNumber: number;
   switch (sortOrder) {
-    case AssetGroups.Token:
-      orderNumber = b.token_name.localeCompare(a.token_name)
-      break;
-    case AssetGroups.Account:
-      orderNumber = b.origin.account.localeCompare(a.origin.account)
-      break;
-    case AssetGroups.Chain:
-      orderNumber = b.origin.chain.localeCompare(a.origin.chain)
-      break;
-    case AssetGroups.Source:
-      orderNumber = b.origin.source.localeCompare(a.origin.source)
-      break;
-    case AssetGroups.Amount:
-      orderNumber = b.numeric_amount() - a.numeric_amount()
-      break;
-    case AssetGroups.Value:
-      orderNumber = b.euroValue() - a.euroValue()
-      break;
+  case AssetGroups.Token:
+    orderNumber = b.token_name.localeCompare(a.token_name)
+    break;
+  case AssetGroups.Account:
+    orderNumber = b.origin.account.localeCompare(a.origin.account)
+    break;
+  case AssetGroups.Chain:
+    orderNumber = b.origin.chain.localeCompare(a.origin.chain)
+    break;
+  case AssetGroups.Source:
+    orderNumber = b.origin.source.localeCompare(a.origin.source)
+    break;
+  case AssetGroups.Amount:
+    orderNumber = b.numeric_amount() - a.numeric_amount()
+    break;
+  case AssetGroups.Value:
+    orderNumber = b.euroValue() - a.euroValue()
+    break;
   }
 
-  if(asc) return orderNumber * -1;
+  if (asc) return orderNumber * -1;
   return orderNumber;
 }
 
@@ -94,7 +93,7 @@ const sortTable = (sortOrder: AssetGroups, asc: boolean) => (a: Asset, b: Asset)
 //   }
 // }
 
-export const AssetList = ({assets, accounts, apiRegistry}: AssetListProps) => {
+export const AssetList = ({ assets, accounts, apiRegistry }: AssetListProps) => {
   const [sortOrder, setSortOrder] = useState<AssetGroups>(AssetGroups.Value)
   const [asc, setAsc] = useState<boolean>(false)
   const filteredAssets = useMemo(() => {
@@ -105,34 +104,34 @@ export const AssetList = ({assets, accounts, apiRegistry}: AssetListProps) => {
   , [assets, sortOrder, asc])
 
   const updateSortOrder = useCallback((order: AssetGroups) => () => {
-    if(sortOrder === order) setAsc((prev) => !prev)
+    if (sortOrder === order) setAsc((prev) => !prev)
     else {
       setSortOrder(order)
       setAsc(true)
     }
-  },[sortOrder])
+  }, [sortOrder])
 
-  if(filteredAssets.length <= 0) return (
+  if (filteredAssets.length <= 0) return (
     <div className={styles.emptyBox}>No Valued Asset found</div>
   )
 
   return (
-  <div>
-    <div className={styles.tableBody}>
-      {tableHeads.map(
-        (th, index) => (
-          <span
-            key={`${index}__${th.title.toLowerCase()}`}
-            className={styles.tableHead} 
-            onClick={updateSortOrder(th.assetGroup)}
-          >
-            {th.title}
-            {sortOrder === th.assetGroup ? <FontAwesomeIcon icon={asc ? faAngleUp : faAngleDown} size="xs" className="text-slate-700" /> : null}
-          </span>
-        )
-      )}
+    <div>
+      <div className={styles.tableBody}>
+        {tableHeads.map(
+          (th, index) => (
+            <span
+              key={`${index}__${th.title.toLowerCase()}`}
+              className={styles.tableHead}
+              onClick={updateSortOrder(th.assetGroup)}
+            >
+              {th.title}
+              {sortOrder === th.assetGroup ? <FontAwesomeIcon icon={asc ? faAngleUp : faAngleDown} size="xs" className="text-slate-700" /> : null}
+            </span>
+          )
+        )}
+      </div>
+      {filteredAssets.map((asset, index) => <AssetItem key={`${asset.name}_${index}`} asset={asset} accounts={accounts} apiRegistry={apiRegistry} />)}
     </div>
-    {filteredAssets.map((asset, index) => <AssetItem key={`${asset.name}_${index}`} asset={asset} accounts={accounts} apiRegistry={apiRegistry} />)}
-  </div>
   )
 }

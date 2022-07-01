@@ -21,7 +21,7 @@ const PRICE_CACHE: Map<string, number> = new Map();
 // is useful to fund the price of something like LKSM, LC-DOT or LDOT. It takes `amount` of
 // `unknown` and returns
 async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<number> {
-	if (PRICE_CACHE.has(formatCurrencyId(x)))  {
+	if (PRICE_CACHE.has(formatCurrencyId(x))) {
 		return PRICE_CACHE.get(formatCurrencyId(x))!
 	}
 

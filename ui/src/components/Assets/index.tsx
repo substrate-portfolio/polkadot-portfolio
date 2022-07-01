@@ -10,7 +10,7 @@ const filterVisibility = (visibility: IVisibility) => (item: Asset, index: numbe
   !(visibility.accounts.includes(item.origin.account) || visibility.networks.includes(item.origin.chain))
 
 const Assets = () => {
-  const {state: {accounts, apiRegistry, assets, visibility}} = useContext(AppContext)
+  const { state: { accounts, apiRegistry, assets, visibility } } = useContext(AppContext)
   const filteredAssets = useMemo(() => assets.filter(filterVisibility(visibility)), [assets, visibility])
   const totalAssetValuesInAllChains = useMemo(() => {
     const sum = filteredAssets.reduce((sum, asset) => sum + asset.euroValue(), 0)
@@ -24,7 +24,7 @@ const Assets = () => {
   //   else setGroupBy(gb)
   // }, [groupBy])
 
-  return(
+  return (
     <div>
       <div>
         <div className='p-4 border-b border-gray-200 flex items-center justify-between'>

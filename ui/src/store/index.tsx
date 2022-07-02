@@ -3,16 +3,18 @@ import { getLocalStorage, setLocalStorage } from '../utils/localStorage';
 import AppReducer, { ActionTypes } from './reducer/AppReducer';
 import { FAddAccount, FAddApiRegistry, FAddNetwork, FChangeVisibility, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IActionList, IAppContext, IVisibility, StoreState } from './store';
 
-const INITIAL_NETWORKS = ["wss://kusama-rpc.polkadot.io",
-"wss://rpc.polkadot.io",
-"wss://statemine-rpc.polkadot.io",
-"wss://karura-rpc-0.aca-api.network",
-"wss://acala-polkadot.api.onfinality.io/public-ws",
-"wss://khala-api.phala.network/ws",
-"wss://rpc.astar.network",
-"wss://rpc.parallel.fi",
-"wss://wss.api.moonbeam.network",
-"wss://wss.moonriver.moonbeam.network"]
+const INITIAL_NETWORKS = [
+  "wss://kusama-rpc.polkadot.io",
+  "wss://rpc.polkadot.io",
+  "wss://statemine-rpc.polkadot.io",
+  "wss://karura-rpc-0.aca-api.network",
+  "wss://acala-polkadot.api.onfinality.io/public-ws",
+  "wss://khala-api.phala.network/ws",
+  "wss://rpc.astar.network",
+  "wss://rpc.parallel.fi",
+  "wss://wss.api.moonbeam.network",
+  "wss://wss.moonriver.moonbeam.network"
+]
 
 const NETWORK_KEY = "networks"
 const ACCOUNT_KEY = "accounts"
@@ -137,7 +139,7 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     state,
     actions,
   }
-  
+
   React.useEffect(() => {
     const {accounts, networks} = state
     setLocalStorage(ACCOUNT_KEY, accounts)

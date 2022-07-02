@@ -1,8 +1,8 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import { AppContext, outerAddApiRegistry } from "../store";
+import { AppContext } from "../store";
 import { IAccount, LoadingScope } from "../store/store.d";
-import { scrape, Asset } from "polkadot-portfolio-core";
+import { Asset, scrape } from "polkadot-portfolio-core"
 import { usePrevious } from "./usePrevious";
 
 const useSyncNetworks = (useTrigger: TriggerRefresh) => {

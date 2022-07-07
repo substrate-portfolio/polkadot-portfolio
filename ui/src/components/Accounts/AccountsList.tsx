@@ -15,7 +15,7 @@ const AccountsList = () => {
   }, [removeAccount])
 
   const handleVisibility = useCallback((account: string) => () => {
-    changeVisibility(account = account)
+    changeVisibility(account)
   }, [changeVisibility])
 
   if(accounts.length) return (

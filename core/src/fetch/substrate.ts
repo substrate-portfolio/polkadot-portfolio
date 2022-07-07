@@ -1,3 +1,4 @@
+// @ts-nocheck
 import '@polkadot/api-augment/substrate';
 import { ApiPromise } from "@polkadot/api";
 import { Option } from "@polkadot/types";
@@ -71,7 +72,6 @@ export async function fetch_assets(api: ApiPromise, account: string, chain: stri
 	const assets: Asset[] = [];
 	const allAssetIds = (await api.query.assets.asset.entries()).map((a) => a[0].args[0]);
 	const fetchAssetsPromise = allAssetIds.map(async (assetId) => {
-		// @ts-ignore
 		const assetAccount: Option<PalletAssetsAssetAccount> = await api.query.assets.account(assetId, account);
 		if (assetAccount.isSome && !assetAccount.unwrap().balance.isZero()) {
 			const meta = await api.query.assets.metadata(assetId);

@@ -45,7 +45,6 @@ const useSyncAssets = (useTrigger: TriggerRefresh) => {
     let assets: Asset[] = [];
     for (const networkWs of networks) {
       const api = apiRegistry.get(networkWs)!;
-
       (await Promise.allSettled(accounts.map(({ id: account }) => scrape(account, api)
       ))).forEach((result) => {
         if (result.status === "fulfilled") {

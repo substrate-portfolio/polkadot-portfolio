@@ -2,8 +2,6 @@ import { ApiPromise } from "@polkadot/api";
 import { IAccount, LoadingScope, StoreState } from "../store";
 import { Asset } from "polkadot-portfolio-core";
 
-export interface IAppReducer {}
-
 export enum ActionTypes {
 	AddNetwork = "AddNetwork",
 	RemoveNetwork = "RemoveNetwork",

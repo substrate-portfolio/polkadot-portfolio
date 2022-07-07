@@ -26,8 +26,7 @@
 		"declaration": false,
 		"emitDeclarationOnly": false,
 		"outDir": "build",
-		"declarationMap": false,
-		"skipLibCheck": true
+		"declarationMap": false
 	}
 }
 

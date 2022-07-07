@@ -1,11 +1,11 @@
 import "@polkadot/api-augment";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { readFileSync } from "fs";
-import { priceOf } from "./utils";
+import { priceOf } from "polkadot-portfolio-core";
 import yargs from 'yargs';
 import { hideBin } from "yargs/helpers"
-import {scrape} from './fetch'
-import { Asset, Summary } from "./types";
+import {scrape} from 'polkadot-portfolio-core'
+import { Asset, Summary } from "polkadot-portfolio-core";
 
 /**
 * Specification of a chain, as described in the JSON account file.
@@ -72,3 +72,5 @@ export async function main() {
 	console.log(`# Final Summary:\n${finalSummary.stringify()}`)
 	console.log(`#########`)
 }
+
+main().catch(console.error).finally(() => process.exit());

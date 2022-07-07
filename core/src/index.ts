@@ -6,7 +6,3 @@ export {
   Asset, Summary, AssetOrigin, scrape, currencyFormat, findDecimals, priceOf
 }
 
-// Running the app:
-import {main} from './app'
-main().catch(console.error).finally(() => process.exit());
-

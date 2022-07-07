@@ -6863,7 +6863,7 @@
   dependencies:
     "find-up" "^3.0.0"
 
-"polkadot-portfolio-core@../core":
+"polkadot-portfolio-core@file:../core":
   "resolved" "file:../core"
   "version" "0.1.1"
   dependencies:

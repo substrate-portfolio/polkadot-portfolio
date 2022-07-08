@@ -37,6 +37,7 @@ export async function scrape(account: string, api: ApiPromise): Promise<Asset[]>
 			assets = assets.concat(rewardPools)
 		}
 	} catch (e) {
+		console.error(e)
 		// throw(e)
 	}
 

@@ -1,4 +1,3 @@
-import "@polkadot/api-augment";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { readFileSync } from "fs";
 import { priceOf } from "polkadot-portfolio-core";

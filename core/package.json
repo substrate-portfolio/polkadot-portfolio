@@ -6,10 +6,9 @@
 	"types": "build/index.d.ts",
 	"scripts": {
 		"dev": "./node_modules/.bin/nodemon --exec ./node_modules/.bin/ts-node ./src/index.ts",
-		"start": "./node_modules/.bin/ts-node ./src/index.ts",
 		"update": "./node_modules/.bin/ncu -u && yarn",
 		"lint": "eslint . --ext .ts --fix",
-		"build": "./node_modules/.bin/tsc --pretty"
+		"build": "./node_modules/.bin/tsc --pretty --declaration"
 	},
 	"author": "@kianenigma",
 	"license": "ISC",

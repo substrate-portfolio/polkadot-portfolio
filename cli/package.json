@@ -30,7 +30,6 @@
 		"typescript-formatter": "^7.2.2"
 	},
 	"dependencies": {
-		"@polkadot/api": "7.1.1",
 		"yargs": "^17.4.0",
 		"polkadot-portfolio-core": "../core"
 	}

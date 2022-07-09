@@ -1,10 +1,9 @@
-import { ApiPromise, WsProvider } from "@polkadot/api";
 import { readFileSync } from "fs";
 import { priceOf } from "polkadot-portfolio-core";
 import yargs from 'yargs';
 import { hideBin } from "yargs/helpers"
 import {scrape} from 'polkadot-portfolio-core'
-import { Asset, Summary } from "polkadot-portfolio-core";
+import { Asset, Summary, ApiPromise, makeApi } from "polkadot-portfolio-core";
 
 /**
 * Specification of a chain, as described in the JSON account file.
@@ -32,8 +31,8 @@ export async function main() {
 
 	// connect to all api endpoints.
 	await Promise.all(accountConfig.networks.map(async (uri: string) => {
-		const provider = new WsProvider(uri);
-		const api = await ApiPromise.create({ provider });
+		const api = await makeApi(uri)
+		apiRegistry.set(uri, api);
 		console.log(`✅ Connected to ${uri} / decimals: ${api.registry.chainDecimals.toString()} / tokens ${api.registry.chainTokens} / [ss58: ${api.registry.chainSS58}]`);
 		// this will just cache everything.
 		const _price = await priceOf(api.registry.chainTokens[0]);

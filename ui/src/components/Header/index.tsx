@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import React, { useContext, useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { AppContext } from "../../store";
 
 const Header = () => {
@@ -16,10 +16,11 @@ const Header = () => {
             <a href="#">
               <span className="font-bold font-sans tracking-widest uppercase">Asset Portfolio</span>
             </a>
-            {anyLoading ? <span>
-              <FontAwesomeIcon icon={faSpinner} spin={anyLoading} />
-            </span>
-  : null } 
+            {
+              anyLoading ? <span>
+                <FontAwesomeIcon icon={faSpinner} spin={anyLoading} />
+              </span>
+                : null }
           </div>
         </div>
       </div>

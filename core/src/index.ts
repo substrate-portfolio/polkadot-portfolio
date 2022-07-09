@@ -10,6 +10,6 @@ export async function makeApi(ws: string): Promise<ApiPromise> {
 }
 
 export {
-  Asset, Summary, AssetOrigin, scrape, currencyFormat, findDecimals, priceOf, ApiPromise
+	Asset, Summary, AssetOrigin, scrape, currencyFormat, findDecimals, priceOf, ApiPromise
 }
 

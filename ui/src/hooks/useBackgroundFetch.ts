@@ -1,8 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 import { AppContext } from "../store";
 import { IAccount, LoadingScope } from "../store/store.d";
-import { Asset, scrape } from "polkadot-portfolio-core"
+import { Asset, scrape, makeApi, ApiPromise } from "polkadot-portfolio-core"
 import { usePrevious } from "./usePrevious";
 
 const useSyncNetworks = (useTrigger: TriggerRefresh) => {
@@ -12,8 +11,7 @@ const useSyncNetworks = (useTrigger: TriggerRefresh) => {
   const { addApiRegistry, setLoading } = actions;
 
   const connect = async (networkUri: string): Promise<ApiPromise> => {
-    const provider = new WsProvider(networkUri);
-    const api = await ApiPromise.create({ provider });
+    const api = await makeApi(networkUri)
     return api;
   }
 

@@ -1,6 +1,5 @@
-import { ApiPromise } from "@polkadot/api";
 import { Asset } from "./types/Asset";
-import {IApiRegistry} from "polkadot-portfolio-core"
+import { IApiRegistry, ApiPromise } from "polkadot-portfolio-core"
 
 export interface StoreState {
   accounts: IAccount[],

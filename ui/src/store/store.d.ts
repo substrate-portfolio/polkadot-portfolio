@@ -2,48 +2,48 @@ import { Asset } from './types/Asset';
 import { IApiRegistry, ApiPromise } from 'polkadot-portfolio-core';
 
 export interface StoreState {
-  accounts: IAccount[];
-  networks: string[];
-  apiRegistry: IApiRegistry;
-  assets: Asset[];
-  visibility: IVisibility;
-  loading: LoadingStates;
+	accounts: IAccount[];
+	networks: string[];
+	apiRegistry: IApiRegistry;
+	assets: Asset[];
+	visibility: IVisibility;
+	loading: LoadingStates;
 }
 
 export interface IVisibility {
-  networks: string[];
-  accounts: string[];
+	networks: string[];
+	accounts: string[];
 }
 
 export interface IAppContext {
-  state: StoreState;
-  actions: IActionList;
+	state: StoreState;
+	actions: IActionList;
 }
 
 export interface IAccount {
-  name: string;
-  id: string;
+	name: string;
+	id: string;
 }
 
 export interface LoadingStates {
-  [key: LoadingScope]: boolean;
+	[key: LoadingScope]: boolean;
 }
 
 export enum LoadingScope {
-  networks = 'networks',
-  assets = 'assets'
+	networks = 'networks',
+	assets = 'assets'
 }
 
 export interface IActionList {
-  addNetwork: FAddNetwork;
-  removeNetwork: FRemoveNetwork;
-  addAccount: FAddAccount;
-  removeAccount: FRemoveAccount;
-  setLoading: FSetLoading;
-  addApiRegistry: FAddApiRegistry;
-  removeApiRegistry: FRemoveApiRegistry;
-  setAssets: FSetAssets;
-  changeVisibility: FChangeVisibility;
+	addNetwork: FAddNetwork;
+	removeNetwork: FRemoveNetwork;
+	addAccount: FAddAccount;
+	removeAccount: FRemoveAccount;
+	setLoading: FSetLoading;
+	addApiRegistry: FAddApiRegistry;
+	removeApiRegistry: FRemoveApiRegistry;
+	setAssets: FSetAssets;
+	changeVisibility: FChangeVisibility;
 }
 
 export type FAddNetwork = (network: string) => void;

@@ -1,6 +1,12 @@
-import { ApiPromise } from "@polkadot/api";
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import { Asset } from "../types";
 import { fetch_tokens, fetch_crowdloan_rewards, fetch_system, fetch_crowdloan, fetch_assets, fetch_reward_pools, } from "./"
+
+export async function makeApi(ws: string): Promise<ApiPromise> {
+	const provider = new WsProvider(ws);
+	const api = await ApiPromise.create({ provider });
+	return api
+}
 
 export async function scrape(account: string, api: ApiPromise): Promise<Asset[]> {
 	let assets: Asset[] = [];

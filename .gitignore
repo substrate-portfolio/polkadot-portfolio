@@ -1,4 +1,3 @@
-node_modules
-key
-build
-accounts*.json
+.vscode
+.idea
+.DS_Store

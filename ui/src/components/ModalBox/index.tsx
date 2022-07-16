@@ -2,7 +2,7 @@ import React from 'react';
 
 interface ModalBoxProps {
 	title: string;
-	children: any[];
+	children: any[] | any;
 }
 
 const ModalBox: React.FC<ModalBoxProps> = ({ title, children }) => {
@@ -12,9 +12,11 @@ const ModalBox: React.FC<ModalBoxProps> = ({ title, children }) => {
 				<h2 className="font-semibold">{title}</h2>
 			</div>
 			<>
-				{children.map((item, index) => (
-					<React.Fragment key={`item_${index}`}>{item}</React.Fragment>
-				))}
+				{Array.isArray(children)
+					? children.map((item, index) => (
+							<React.Fragment key={`item_${index}`}>{item}</React.Fragment>
+					  ))
+					: children}
 			</>
 		</div>
 	);

@@ -1,6 +1,6 @@
 import { faClose, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ApiPromise } from "@polkadot/api";
+import { ApiPromise } from "polkadot-portfolio-core";
 import classNames from "classnames";
 import { useCallback, useMemo } from "react";
 import { FChangeVisibility, FRemoveApiRegistry, FRemoveNetwork, IVisibility } from "../../store/store";

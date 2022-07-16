@@ -7,7 +7,6 @@
 		],
 		"allowJs": true,
 		"rootDir": "./src",
-
 		// Some compiling checks.
 		"strict": true,
 		"noImplicitAny": true,

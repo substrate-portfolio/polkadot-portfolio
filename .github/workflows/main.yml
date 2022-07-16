@@ -36,7 +36,7 @@ jobs:
           cd ./ui
           npm install
           npm link ../core
-          npm run build
+          DISABLE_ESLINT_PLUGIN=true npm run build
       - name: deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:

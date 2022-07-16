@@ -49,6 +49,7 @@
 			"react-app/jest"
 		]
 	},
+	"homepage": "https://substrate-portfolio.github.io/polkadot-portfolio",
 	"browserslist": {
 		"production": [
 			">0.2%",

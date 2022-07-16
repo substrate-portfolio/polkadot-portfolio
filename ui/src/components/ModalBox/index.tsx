@@ -12,9 +12,9 @@ const ModalBox: React.FC<ModalBoxProps> = ({title, children}) => {
         <h2 className="font-semibold">{title}</h2>
       </div>
       <>
-      {children.map(
-        (item,index) => <React.Fragment key={`item_${index}`}>{item}</React.Fragment>
-      )}
+        {children.map(
+          (item,index) => <React.Fragment key={`item_${index}`}>{item}</React.Fragment>
+        )}
       </>
     </div>
   )

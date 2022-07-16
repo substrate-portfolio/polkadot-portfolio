@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ApiPromise } from "@polkadot/api";
 import BN from "bn.js";
 import { Asset } from "../types";

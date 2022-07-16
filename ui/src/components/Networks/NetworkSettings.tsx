@@ -45,8 +45,7 @@ const NetworksSetting = ({ addNetwork }: AddNetworkProps) => {
 				className={classNames(styles.button.default, {
 					[styles.button.disabled]: !validNetwork
 				})}
-				onClick={addNetworkToList}
-			>
+				onClick={addNetworkToList}>
 				Add and Connect
 			</button>
 		</ModalBox>

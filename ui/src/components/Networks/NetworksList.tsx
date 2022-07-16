@@ -36,8 +36,7 @@ const NetworkItem = ({
 				<span
 					className={`w-3 h-3 rounded-full mr-4 inline-block ${
 						isConnected ? 'bg-green-600' : 'bg-orange-500'
-					}`}
-				></span>
+					}`}></span>
 				<span className="flex-1 inline-block">
 					{networkName.length > 20 ? `${networkName.slice(0, 20)}...` : networkName}
 				</span>
@@ -53,8 +52,7 @@ const NetworkItem = ({
 					</div>
 					<div
 						className="px-2 rounded-full bg-red-100 hover:bg-red-300 cursor-pointer"
-						onClick={disconnect(network)}
-					>
+						onClick={disconnect(network)}>
 						<FontAwesomeIcon icon={faClose} size="xs" className="text-red-800" />
 					</div>
 				</div>

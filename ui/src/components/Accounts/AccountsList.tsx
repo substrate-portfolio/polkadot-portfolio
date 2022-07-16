@@ -30,15 +30,13 @@ const AccountsList = () => {
 				{accounts.map((account, index) => (
 					<div
 						className="flex items-center py-2 rounded-md hover:bg-slate-50 mb-2 last:mb-0"
-						key={`${index}_${account.name}`}
-					>
+						key={`${index}_${account.name}`}>
 						<div className="flex-1">{account.name}</div>
 
 						<div className="inline-flex items-center">
 							<div
 								className="px-2 mr-2 rounded-ful cursor-pointer"
-								onClick={handleVisibility(account.id)}
-							>
+								onClick={handleVisibility(account.id)}>
 								<FontAwesomeIcon
 									icon={hiddenAccounts.includes(account.id) ? faEyeSlash : faEye}
 									size="xs"
@@ -49,8 +47,7 @@ const AccountsList = () => {
 							</div>
 							<div
 								className="px-2 rounded-full bg-red-100 hover:bg-red-300 cursor-pointer"
-								onClick={handleRemove(account.id)}
-							>
+								onClick={handleRemove(account.id)}>
 								<FontAwesomeIcon icon={faClose} size="xs" className="text-red-800" />
 							</div>
 						</div>

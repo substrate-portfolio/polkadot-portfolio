@@ -21,8 +21,7 @@ export const Accounts = () => {
 				<span className="font-semibold inline-flex text-xl text-slate-600">Accounts</span>
 				<button
 					className="inline-flex items-center rounded-md bg-green-500 hover:bg-green-700 text-center text-sm py-2 px-2 appearance-none text-white"
-					onClick={handleModalState(true)}
-				>
+					onClick={handleModalState(true)}>
 					<span className="">Add Account</span>
 					<FontAwesomeIcon className="ml-2" icon={faPlus} size="xs" color="white" />
 				</button>

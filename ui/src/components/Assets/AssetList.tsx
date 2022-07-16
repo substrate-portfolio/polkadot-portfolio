@@ -124,8 +124,7 @@ export const AssetList = ({ assets, accounts, apiRegistry }: AssetListProps) => 
 					<span
 						key={`${index}__${th.title.toLowerCase()}`}
 						className={styles.tableHead}
-						onClick={updateSortOrder(th.assetGroup)}
-					>
+						onClick={updateSortOrder(th.assetGroup)}>
 						{th.title}
 						{sortOrder === th.assetGroup ? (
 							<FontAwesomeIcon

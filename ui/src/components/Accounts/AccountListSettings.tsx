@@ -52,8 +52,7 @@ const AccountListSettings = () => {
 				className={classNames(SharedStyles.button.default, {
 					[SharedStyles.button.disabled]: disabled
 				})}
-				onClick={addAccountToList}
-			>
+				onClick={addAccountToList}>
 				Add Account
 			</button>
 		</ModalBox>

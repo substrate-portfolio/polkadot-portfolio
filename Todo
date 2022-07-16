@@ -1,39 +1,36 @@
-So on react app: (first version)
-  [x] Load the networks from a list on startup
-  [x] Store accounts in local storage (or indexed db)
-  [x] Flat structure of the items
-  [x] Show summary of the assets
-  [x] update UI for better account management
-  [x] Remove the redundant stuff
-  [x] Network input validation
-  [x] Account input validation
-  [x] update app name
+UI:
+  - Fetching Coin Data: 
+    [] Live coin data
 
-Core:
-  [] fix fetch coin values (background fetch?)
+  - Networks and Accounts:
+    [] Auto complete for networks: We should have a list of hardcoded networks (copy pasta from polkadot.js/apps), and upon adding a new network, you should be able to just type “Polkadot” and it should potentially suggest a known ws endpoint for it.
+    [] Networks should have icons (hardcoded)
+    [] Accounts should have icon as well (https://github.com/polkadot-js/ui/tree/master/packages/react-identicon#readme).
+  
+  - Actions on Token Table:
+    [] Filtering small amounts
+    [] Filtering by Token Name
+    [] Filtering table by values
+    [] Grouping stuff by headliners (harder)
+    [] Add unit test. 
 
-Networks and Accounts:
-  [] Auto complete for networks: We should have a list of hardcoded networks (copy pasta from polkadot.js/apps), and upon adding a new network, you should be able to just type “Polkadot” and it should potentially suggest a known ws endpoint for it.
-  [] Networks should have icons (hardcoded)
-  [] Accounts should have icon as well (https://github.com/polkadot-js/ui/tree/master/packages/react-identicon#readme).
+  - [ ] UI Network Preludes: ALL, DOTSama, Polkadot, Kusama
+  - [ ] Account Import from Extensions 
 
-Actions on Token Table:
-  [x] Sortable Table
-  [x] Filtering by Accounts
-  [x] Filtering by Networks
-  [] Filtering small amounts
-  [] Filtering by Token Name
-  [] Filtering table by values
-  [] Grouping stuff by headliners (harder)
-  [] Hovering on any token amount should show its decimal points, and the actual underlying value
+CORE: 
+  [] Provide API to fetch coins data from various sources and keep them up to date
+  [] Detect address format (ETH + BTC)
+  [] Dictionary for network names to WSS urls (to be maintained by community) (Re-export from polkadot-js/app/endpoints)
+  [] Dictionary for asset sources to be exported from Core
+  [] Native assets and derivatives should be distinguished (task for Kian)
+  [] Clean up Core/UI related functions from class
+  [] Add unit test
+  [] Remove TS-ignore/Ts-No checks.
+  [] Refactor core with better design
 
-Feedback from Kian:
-  Bugs:
-    [x] Changing networks (adding/removing) should also re-trigger a scrape
-    [x] Progress bar is not accurate
+CLI: 
+  [] Move summary from Core to CLI
 
-  Features:
-    [x] Table should be sort-able
-    [x] Accounts and networks should have an option to be saved in local storage
-    [] Native assets and derivatives should be distinguished (task for Kian)
-    [] Github deployment soon so we can shill it a bit and also request tips
+Delivery: 
+  [] README.md + CONTRIBUTING.md
+  [] Github deployment soon so we can shill it a bit and also request tips

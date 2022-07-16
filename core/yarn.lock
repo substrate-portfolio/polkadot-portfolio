@@ -612,30 +612,7 @@
     "@polkadot/util-crypto" "^8.3.2"
     "rxjs" "^7.5.2"
 
-"@polkadot/api@^7.1.1", "@polkadot/api@7.15.1":
-  "integrity" "sha512-z0z6+k8+R9ixRMWzfsYrNDnqSV5zHKmyhTCL0I7+1I081V18MJTCFUKubrh0t1gD0/FCt3U9Ibvr4IbtukYLrQ=="
-  "resolved" "https://registry.npmjs.org/@polkadot/api/-/api-7.15.1.tgz"
-  "version" "7.15.1"
-  dependencies:
-    "@babel/runtime" "^7.17.8"
-    "@polkadot/api-augment" "7.15.1"
-    "@polkadot/api-base" "7.15.1"
-    "@polkadot/api-derive" "7.15.1"
-    "@polkadot/keyring" "^8.7.1"
-    "@polkadot/rpc-augment" "7.15.1"
-    "@polkadot/rpc-core" "7.15.1"
-    "@polkadot/rpc-provider" "7.15.1"
-    "@polkadot/types" "7.15.1"
-    "@polkadot/types-augment" "7.15.1"
-    "@polkadot/types-codec" "7.15.1"
-    "@polkadot/types-create" "7.15.1"
-    "@polkadot/types-known" "7.15.1"
-    "@polkadot/util" "^8.7.1"
-    "@polkadot/util-crypto" "^8.7.1"
-    "eventemitter3" "^4.0.7"
-    "rxjs" "^7.5.5"
-
-"@polkadot/api@>6.3.1", "@polkadot/api@7.1.1":
+"@polkadot/api@^7.1.1", "@polkadot/api@>6.3.1", "@polkadot/api@7.1.1":
   "integrity" "sha512-cb5nXBieUdN1cC6qz0t+cSOeLpvHcYx3OPebEmeTBehkiXGNcbSQUvxt30ohnZmT32seGcwgVyXSsSVMTYm7Lg=="
   "resolved" "https://registry.npmjs.org/@polkadot/api/-/api-7.1.1.tgz"
   "version" "7.1.1"
@@ -657,6 +634,29 @@
     "@polkadot/util-crypto" "^8.2.2"
     "eventemitter3" "^4.0.7"
     "rxjs" "^7.4.0"
+
+"@polkadot/api@7.15.1":
+  "integrity" "sha512-z0z6+k8+R9ixRMWzfsYrNDnqSV5zHKmyhTCL0I7+1I081V18MJTCFUKubrh0t1gD0/FCt3U9Ibvr4IbtukYLrQ=="
+  "resolved" "https://registry.npmjs.org/@polkadot/api/-/api-7.15.1.tgz"
+  "version" "7.15.1"
+  dependencies:
+    "@babel/runtime" "^7.17.8"
+    "@polkadot/api-augment" "7.15.1"
+    "@polkadot/api-base" "7.15.1"
+    "@polkadot/api-derive" "7.15.1"
+    "@polkadot/keyring" "^8.7.1"
+    "@polkadot/rpc-augment" "7.15.1"
+    "@polkadot/rpc-core" "7.15.1"
+    "@polkadot/rpc-provider" "7.15.1"
+    "@polkadot/types" "7.15.1"
+    "@polkadot/types-augment" "7.15.1"
+    "@polkadot/types-codec" "7.15.1"
+    "@polkadot/types-create" "7.15.1"
+    "@polkadot/types-known" "7.15.1"
+    "@polkadot/util" "^8.7.1"
+    "@polkadot/util-crypto" "^8.7.1"
+    "eventemitter3" "^4.0.7"
+    "rxjs" "^7.5.5"
 
 "@polkadot/api@7.4.1":
   "integrity" "sha512-o9KWUY1o54VOfcNBIiwDpIwj1FhluSwIlr+/OO6VM47djkEvrlP9W5Z/NXECAr6O/yT+jR0PCwaPshey72+B8Q=="
@@ -4243,7 +4243,7 @@
     "micromatch" "^4.0.0"
     "semver" "^7.3.4"
 
-"ts-node@^10.8.2":
+"ts-node@^10.7.0":
   "integrity" "sha512-LYdGnoGddf1D6v8REPtIH+5iq/gTDuZqv2/UJUU7tKjuEU8xVZorBM+buCGNjj+pGEud+sOoM4CX3/YzINpENA=="
   "resolved" "https://registry.npmjs.org/ts-node/-/ts-node-10.8.2.tgz"
   "version" "10.8.2"

@@ -1,6 +1,6 @@
-import Header from "../../components/Header";
+import Header from '../../components/Header';
 import Networks from '../../components/Networks';
-import {Accounts} from '../../components/Accounts';
+import { Accounts } from '../../components/Accounts';
 
 const Sidebar = () => {
   return (
@@ -9,7 +9,7 @@ const Sidebar = () => {
       <Networks />
       <Accounts />
     </div>
-  )
-}
+  );
+};
 
 export default Sidebar;

@@ -1,23 +1,36 @@
 import React, { useReducer } from 'react';
 import { getLocalStorage, setLocalStorage } from '../utils/localStorage';
 import AppReducer, { ActionTypes } from './reducer/AppReducer';
-import { FAddAccount, FAddApiRegistry, FAddNetwork, FChangeVisibility, FRemoveApiRegistry, FRemoveNetwork, FSetAssets, FSetLoading, IActionList, IAppContext, IVisibility, StoreState } from './store';
+import {
+  FAddAccount,
+  FAddApiRegistry,
+  FAddNetwork,
+  FChangeVisibility,
+  FRemoveApiRegistry,
+  FRemoveNetwork,
+  FSetAssets,
+  FSetLoading,
+  IActionList,
+  IAppContext,
+  IVisibility,
+  StoreState
+} from './store';
 
 const INITIAL_NETWORKS = [
-  "wss://kusama-rpc.polkadot.io",
-  "wss://rpc.polkadot.io",
-  "wss://statemine-rpc.polkadot.io",
-  "wss://karura-rpc-0.aca-api.network",
-  "wss://acala-polkadot.api.onfinality.io/public-ws",
-  "wss://khala-api.phala.network/ws",
-  "wss://rpc.astar.network",
-  "wss://rpc.parallel.fi",
-  "wss://wss.api.moonbeam.network",
-  "wss://wss.moonriver.moonbeam.network"
-]
+  'wss://kusama-rpc.polkadot.io',
+  'wss://rpc.polkadot.io',
+  'wss://statemine-rpc.polkadot.io',
+  'wss://karura-rpc-0.aca-api.network',
+  'wss://acala-polkadot.api.onfinality.io/public-ws',
+  'wss://khala-api.phala.network/ws',
+  'wss://rpc.astar.network',
+  'wss://rpc.parallel.fi',
+  'wss://wss.api.moonbeam.network',
+  'wss://wss.moonriver.moonbeam.network'
+];
 
-const NETWORK_KEY = "networks"
-const ACCOUNT_KEY = "accounts"
+const NETWORK_KEY = 'networks';
+const ACCOUNT_KEY = 'accounts';
 
 export const initialState = {
   accounts: getLocalStorage(ACCOUNT_KEY) ?? [],
@@ -26,58 +39,58 @@ export const initialState = {
   apiRegistry: new Map(),
   visibility: {
     networks: [],
-    accounts: [],
+    accounts: []
   } as IVisibility,
-  loading: false,
-} as StoreState
+  loading: false
+} as StoreState;
 
 export const defaultContext = {
   state: initialState,
   actions: {} as IActionList
-} as IAppContext
+} as IAppContext;
 
 export const AppContext = React.createContext(defaultContext);
 
 export const outerAddApiRegistry: FAddApiRegistry = (network, registry) => {
-  return({
+  return {
     type: ActionTypes.AddRegistry,
     payload: {
       network,
       registry
-    },
-  })
-}
+    }
+  };
+};
 
-export const AppContextProvider = ({ children } : {children: any}) => {
-  const [state, dispatch]: [StoreState, any] = useReducer(AppReducer, initialState)
+export const AppContextProvider = ({ children }: { children: any }) => {
+  const [state, dispatch]: [StoreState, any] = useReducer(AppReducer, initialState);
 
   const addNetwork: FAddNetwork = (network) => {
     dispatch({
       type: ActionTypes.AddNetwork,
-      payload: network,
-    })
-  }
+      payload: network
+    });
+  };
 
   const removeNetwork: FRemoveNetwork = (network) => {
     dispatch({
       type: ActionTypes.RemoveNetwork,
-      payload: network,
-    })
-  }
+      payload: network
+    });
+  };
 
   const addAccount: FAddAccount = (account) => {
     dispatch({
       type: ActionTypes.AddAccount,
-      payload: account,
-    })
-  }
+      payload: account
+    });
+  };
 
   const removeAccount: FRemoveNetwork = (accountId) => {
     dispatch({
       type: ActionTypes.RemoveAccount,
-      payload: accountId,
-    })
-  }
+      payload: accountId
+    });
+  };
 
   const setLoading: FSetLoading = (loadingState, scope) => {
     dispatch({
@@ -85,9 +98,9 @@ export const AppContextProvider = ({ children } : {children: any}) => {
       payload: {
         loadingState,
         scope
-      },
-    })
-  }
+      }
+    });
+  };
 
   const addApiRegistry: FAddApiRegistry = (network, registry) => {
     dispatch({
@@ -95,33 +108,33 @@ export const AppContextProvider = ({ children } : {children: any}) => {
       payload: {
         network,
         registry
-      },
-    })
-  }
+      }
+    });
+  };
 
   const removeApiRegistry: FRemoveApiRegistry = (network) => {
     dispatch({
       type: ActionTypes.RemoveRegistry,
-      payload: network,
-    })
-  }
+      payload: network
+    });
+  };
 
   const setAssets: FSetAssets = (assets) => {
     dispatch({
       type: ActionTypes.SetAssets,
-      payload: assets,
-    })
-  }
+      payload: assets
+    });
+  };
 
   const changeVisibility: FChangeVisibility = (account = null, network = null) => {
     dispatch({
       type: ActionTypes.ChangeVisibility,
       payload: {
         account,
-        network,
-      },
-    })
-  }
+        network
+      }
+    });
+  };
 
   const actions = {
     addNetwork,
@@ -133,22 +146,18 @@ export const AppContextProvider = ({ children } : {children: any}) => {
     removeApiRegistry,
     setAssets,
     changeVisibility
-  } as IActionList
+  } as IActionList;
 
   const context = {
     state,
-    actions,
-  }
+    actions
+  };
 
   React.useEffect(() => {
-    const {accounts, networks} = state
-    setLocalStorage(ACCOUNT_KEY, accounts)
-    setLocalStorage(NETWORK_KEY, networks)
-  }, [state])
+    const { accounts, networks } = state;
+    setLocalStorage(ACCOUNT_KEY, accounts);
+    setLocalStorage(NETWORK_KEY, networks);
+  }, [state]);
 
-  return (
-    <AppContext.Provider value={context}>
-      {children}
-    </AppContext.Provider>
-  )
-}
+  return <AppContext.Provider value={context}>{children}</AppContext.Provider>;
+};

@@ -1,23 +1,34 @@
 import BN from 'bn.js';
 import { IValueBearing, IChain } from '.';
 import { Asset } from '../types';
-import { priceOf } from '../utils';
+import { tickerPrice } from '../utils';
 
-
-export class System implements IValueBearing {
-	identifier: string;
+export class Account32ValueBearing {
+	addressLength: number;
 
 	constructor() {
-		this.identifier = "system";
+		this.addressLength = 32;
+	}
+}
+
+export class System extends Account32ValueBearing implements IValueBearing {
+	identifiers: string[];
+
+	constructor() {
+		super()
+		this.identifiers = ["system"];
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
 		const ticker = chain.api.registry.chainTokens[0];
-		const price = await priceOf(ticker);
+		const price = await tickerPrice(ticker);
 		const accountData = await chain.api.query.system.account(account);
 		const decimals = new BN(chain.api.registry.chainDecimals[0]);
-		const assets: Asset[] = [
-			new Asset({
+
+
+		let assets: Asset[] = [];
+		if (!accountData.data.free.isZero()) {
+			assets.push(new Asset({
 				name: `free_${ticker}`,
 				ticker,
 				price,
@@ -25,8 +36,10 @@ export class System implements IValueBearing {
 				amount: accountData.data.free || new BN(0),
 				decimals,
 				origin: { account, chain: chain.name, source: 'system pallet' }
-			}),
-			new Asset({
+			}))
+		}
+		if (!accountData.data.reserved.isZero()) {
+			assets.push(new Asset({
 				name: `reserved_${ticker}`,
 				ticker,
 				price,
@@ -34,23 +47,24 @@ export class System implements IValueBearing {
 				amount: accountData.data.reserved || new BN(0),
 				decimals,
 				origin: { account, chain: chain.name, source: 'system pallet' }
-			})
-		];
+			}))
+		}
 		return assets;
 	}
 }
 
-export class ParachainCrowdloan implements IValueBearing {
-	identifier: string;
+export class ParachainCrowdloan extends Account32ValueBearing implements IValueBearing {
+	identifiers: string[];
 
 	constructor() {
-		this.identifier = "crowdloan";
+		super()
+		this.identifiers = ["paras", "crowdloan"];
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
 		const { api, name: chainName } = chain;
 		const ticker = api.registry.chainTokens[0];
-		const price = await priceOf(ticker);
+		const price = await tickerPrice(ticker);
 		const accountHex = api.createType('AccountId', account).toHex();
 		const decimals = new BN(api.registry.chainDecimals[0]);
 		// @ts-ignore
@@ -83,11 +97,12 @@ export class ParachainCrowdloan implements IValueBearing {
 	}
 }
 
-export class Assets implements IValueBearing {
-	identifier: string;
+export class Assets extends Account32ValueBearing implements IValueBearing {
+	identifiers: string[];
 
 	constructor() {
-		this.identifier = "assets";
+		super()
+		this.identifiers = ["assets"];
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
@@ -103,7 +118,7 @@ export class Assets implements IValueBearing {
 				const meta = await api.query.assets.metadata(assetId);
 				const decimals = new BN(meta.decimals);
 				const ticker = (meta.symbol.toHuman() || '').toString();
-				const price = await priceOf(ticker);
+				const price = await tickerPrice(ticker);
 				assets.push(
 					new Asset({
 						ticker,

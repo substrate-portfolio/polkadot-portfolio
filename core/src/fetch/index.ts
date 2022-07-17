@@ -3,7 +3,7 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Asset } from '../types';
 import { Assets, System, ParachainCrowdloan } from "./substrate";
 import { MoonbeamCrowdloanRewards } from "./moonbeam";
-import { identity } from 'lodash';
+import { tickerPrice } from '../utils';
 
 export interface IChain {
 	api: ApiPromise,
@@ -11,14 +11,27 @@ export interface IChain {
 }
 
 export interface IValueBearing {
-	identifier: string
+	identifiers: string[],
+	addressLength: number,
 	extract(chain: IChain, account: string): Promise<Asset[]>;
 }
 
 export async function makeApi(ws: string): Promise<ApiPromise> {
 	const provider = new WsProvider(ws);
 	const api = await ApiPromise.create({ provider });
+
+	// this will cache the price.
+	const _price = await tickerPrice(api.registry.chainTokens[0]);
+
 	return api;
+}
+
+function accountLengthCheck(api: ApiPromise, account: string, expectedLength: number): boolean {
+	try {
+		return api.createType("AccountId", account).toU8a().length === expectedLength
+	} catch {
+		return false
+	}
 }
 
 export async function scrape(account: string, api: ApiPromise): Promise<Asset[]> {
@@ -30,15 +43,13 @@ export async function scrape(account: string, api: ApiPromise): Promise<Asset[]>
 	];
 
 	for (let mod of valueBearingModules) {
-		const instances = api.registry.getModuleInstances(api.runtimeVersion.specName.toString(), mod.identifier);
-		console.log(chain, api.runtimeVersion.specName.toString(), mod.identifier, instances);
-
-		if (api.query[mod.identifier]) {
+		// const instances = api.registry.getModuleInstances(api.runtimeVersion.specName.toString(), mod.identifier);
+		if (mod.identifiers.every((i) => api.query[i])) {
 			try {
 				const moduleAssets = await mod.extract({ api, name: chain }, account);
 				assets = assets.concat(moduleAssets);
 			} catch (e) {
-				console.error(`error while fetching ${mod.identifier} for ${account}:`, e);
+				console.error(`error while fetching ${mod.identifiers} for ${account} in chain ${chain}:`, e);
 				// throw(e)
 			}
 		}

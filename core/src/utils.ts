@@ -1,6 +1,7 @@
 import { ApiPromise } from '@polkadot/api';
 import axios from 'axios';
 import BN from 'bn.js';
+import { Asset } from './types';
 
 /**
  * Map a token name to chain name, because coingecko can only understand this.
@@ -22,15 +23,16 @@ const COIN_CHAIN_MAP: Map<string, string> = new Map([
 
 const PRICE_CACHE: Map<string, number> = new Map();
 
-export async function priceOf(token: string): Promise<number> {
+export async function tickerPrice(ticker: string): Promise<number> {
 	// cater for xc-tokens in moonbeam.
-	if (token.startsWith('xc')) {
-		token = token.slice(2);
+	if (ticker.startsWith('xc')) {
+		ticker = ticker.slice(2);
 	}
 
-	const tokenTransformed = COIN_CHAIN_MAP.has(token.toLowerCase())
-		? COIN_CHAIN_MAP.get(token.toLowerCase())!
-		: token.toLowerCase();
+	const tokenTransformed = COIN_CHAIN_MAP.has(ticker.toLowerCase())
+		? COIN_CHAIN_MAP.get(ticker.toLowerCase())!
+		: ticker.toLowerCase();
+
 	if (PRICE_CACHE.has(tokenTransformed)) {
 		return PRICE_CACHE.get(tokenTransformed)!;
 	}

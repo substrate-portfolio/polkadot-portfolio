@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { priceOf, scrape, Asset, ApiPromise, makeApi } from 'polkadot-portfolio-core';
+import { tickerPrice, scrape, Asset, ApiPromise, makeApi } from 'polkadot-portfolio-core';
 import * as BN from "bn.js";
 import * as currencyFormatter from 'currency-formatter';
 import yargs from 'yargs';
@@ -90,6 +90,10 @@ function formatAmount(asset: Asset): string {
 	return `${token_amount} - ${currencyFormatter.format(eur_amount, { locale: 'nl-NL' })}`;
 }
 
+function stringifyAsset(asset: Asset): string {
+	return `[${asset.transferrable ? '🍺' : '🔐'}][${asset.ticker}] ${asset.name}: ${formatAmount(asset)}`;
+}
+
 export async function main() {
 	const apiRegistry: Map<string, ApiPromise> = new Map<string, ApiPromise>();
 	// initialize `apiRegistry`.
@@ -106,7 +110,7 @@ export async function main() {
 				} / [ss58: ${api.registry.chainSS58}]`
 			);
 			// this will just cache everything.
-			const _price = await priceOf(api.registry.chainTokens[0]);
+			const _price = await tickerPrice(api.registry.chainTokens[0]);
 			apiRegistry.set(uri, api);
 		})
 	);
@@ -125,9 +129,11 @@ export async function main() {
 
 	accountConfig.stashes.forEach(([account, name]) => {
 		const accountAssets = allAssets.filter((a) => a.origin.account === account);
-		const summary = new Summary(accountAssets);
 		console.log(`#########`);
-		console.log(`# Summary of ${account} / ${name}:\n${summary.stringify()}`);
+		console.log(`# Summary of ${account} / ${name}:`);
+		for (let asset of accountAssets) {
+			console.log(stringifyAsset(asset))
+		}
 		console.log(`#########`);
 	});
 
@@ -135,9 +141,11 @@ export async function main() {
 		const api = apiRegistry.get(networkWs)!;
 		const chain = (await api.rpc.system.chain()).toString();
 		const chainAssets = allAssets.filter((a) => a.origin.chain === chain);
-		const summary = new Summary(chainAssets);
 		console.log(`#########`);
-		console.log(`# Summary of chain ${chain} :\n${summary.stringify()}`);
+		console.log(`# Summary of chain ${chain}:`);
+		for (let asset of chainAssets) {
+			console.log(stringifyAsset(asset))
+		}
 		console.log(`#########`);
 	}
 

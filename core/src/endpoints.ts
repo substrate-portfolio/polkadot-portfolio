@@ -16,7 +16,7 @@ export interface IChainEndpoint {
 	endpoints: Record<string, string>,
 }
 
-let allChains: IChainEndpoint[] = [];
+export let allChains: IChainEndpoint[] = [];
 const addChain = (e: any, ecosystem: Ecosystem) => allChains.push({ name: e.text, ecosystem, endpoints: e.providers })
 
 // Polkadot stuff
@@ -29,6 +29,4 @@ prodRelayKusama.linked?.forEach((e) => addChain(e, Ecosystem.Kusama))
 
 // everything else.
 prodChains.forEach((e) => addChain(e, Ecosystem.None));
-
-console.log(allChains);
 

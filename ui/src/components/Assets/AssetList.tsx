@@ -35,17 +35,17 @@ export const AssetItem = ({ asset, accounts, apiRegistry }: AssetItemProps) => {
 
 	return (
 		<div className={styles.row}>
-			<span className={styles.col}>{asset.token_name}</span>
+			<span className={styles.col}>{asset.ticker}</span>
 			<span className={styles.col}>{accountName}</span>
 			<span className={styles.col}>{asset.origin.chain}</span>
 			<span className={styles.col}>{asset.origin.source}</span>
-			<span className={styles.col}>{asset.format_amount()}</span>
+			<span className={styles.col}>{asset.floatAmount()}</span>
 			<span className={styles.col}>{currencyFormat(asset.euroValue())}</span>
 		</div>
 	);
 };
 
-const filterZeroAmount = (item: Asset) => item.numeric_amount() > 0;
+const filterZeroAmount = (item: Asset) => item.floatAmount() > 0;
 
 const sortTable =
 	(sortOrder: AssetGroups, asc: boolean) =>
@@ -53,7 +53,7 @@ const sortTable =
 		let orderNumber: number;
 		switch (sortOrder) {
 			case AssetGroups.Token:
-				orderNumber = b.token_name.localeCompare(a.token_name);
+				orderNumber = b.ticker.localeCompare(a.ticker);
 				break;
 			case AssetGroups.Account:
 				orderNumber = b.origin.account.localeCompare(a.origin.account);
@@ -65,7 +65,7 @@ const sortTable =
 				orderNumber = b.origin.source.localeCompare(a.origin.source);
 				break;
 			case AssetGroups.Amount:
-				orderNumber = b.numeric_amount() - a.numeric_amount();
+				orderNumber = b.floatAmount() - a.floatAmount();
 				break;
 			case AssetGroups.Value:
 				orderNumber = b.euroValue() - a.euroValue();

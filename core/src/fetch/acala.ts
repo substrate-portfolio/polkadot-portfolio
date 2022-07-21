@@ -6,6 +6,7 @@ import { OrmlAccountData } from '@open-web3/orml-types/interfaces/';
 import { types } from '@acala-network/types';
 import BN from 'bn.js';
 import { findDecimals, priceOf } from '../utils';
+import { IValueBearing } from '.';
 
 async function findPriceOrCheckDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<number> {
 	const normal = await priceOf(formatCurrencyId(x));
@@ -38,8 +39,7 @@ async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): P
 	const MUL = 10000;
 	const yPrice = new BN((await priceOf(formatCurrencyId(y))) * MUL);
 	console.log(
-		`🎩 price of ${x.toString()} via ${y.toString()} is ${
-			yTotal.mul(yPrice).div(xTotal).toNumber() / MUL
+		`🎩 price of ${x.toString()} via ${y.toString()} is ${yTotal.mul(yPrice).div(xTotal).toNumber() / MUL
 		}`
 	);
 	const price = yTotal.mul(yPrice).div(xTotal).toNumber() / MUL;

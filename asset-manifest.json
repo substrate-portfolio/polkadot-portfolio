@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/polkadot-portfolio/static/css/main.6930f249.css",
-    "main.js": "/polkadot-portfolio/static/js/main.029e847e.js",
+    "main.css": "/polkadot-portfolio/static/css/main.0b16b997.css",
+    "main.js": "/polkadot-portfolio/static/js/main.ab33ba29.js",
     "static/js/787.349b0e60.chunk.js": "/polkadot-portfolio/static/js/787.349b0e60.chunk.js",
     "index.html": "/polkadot-portfolio/index.html",
-    "main.6930f249.css.map": "/polkadot-portfolio/static/css/main.6930f249.css.map",
-    "main.029e847e.js.map": "/polkadot-portfolio/static/js/main.029e847e.js.map",
+    "main.0b16b997.css.map": "/polkadot-portfolio/static/css/main.0b16b997.css.map",
+    "main.ab33ba29.js.map": "/polkadot-portfolio/static/js/main.ab33ba29.js.map",
     "787.349b0e60.chunk.js.map": "/polkadot-portfolio/static/js/787.349b0e60.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.6930f249.css",
-    "static/js/main.029e847e.js"
+    "static/css/main.0b16b997.css",
+    "static/js/main.ab33ba29.js"
   ]
 }

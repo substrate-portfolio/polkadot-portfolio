@@ -9,6 +9,7 @@ import {
 	FRemoveNetwork,
 	IVisibility
 } from '../../store/store';
+import AccountIcon from '../AccountIcon';
 
 interface NetworkItemProps {
 	key: string;

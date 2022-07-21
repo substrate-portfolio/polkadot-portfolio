@@ -26,7 +26,7 @@ export async function makeApi(ws: string): Promise<ApiPromise> {
 	return api;
 }
 
-function accountLengthCheck(api: ApiPromise, account: string, expectedLength: number): boolean {
+export function accountLengthCheck(api: ApiPromise, account: string, expectedLength: number): boolean {
 	try {
 		return api.createType("AccountId", account).toU8a().length === expectedLength
 	} catch {

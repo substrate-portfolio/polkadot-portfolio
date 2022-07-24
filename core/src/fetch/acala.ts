@@ -1,15 +1,23 @@
-// @ts-nocheck
 import { ApiPromise } from '@polkadot/api';
 import { Asset, AssetOrigin } from '../types';
-import { CurrencyId, PoolId, DexShare } from '@acala-network/types/interfaces/';
 import { OrmlAccountData } from '@open-web3/orml-types/interfaces/';
 import { types } from '@acala-network/types';
 import BN from 'bn.js';
-import { findDecimals, priceOf } from '../utils';
-import { IValueBearing } from '.';
+import { findDecimals, tickerPrice } from '../utils';
+import { IChain, IValueBearing } from '.';
+import { Account32ValueBearing } from './substrate';
+import {
+	AcalaPrimitivesCurrencyCurrencyId,
+	AcalaPrimitivesCurrencyDexShare,
+	ModuleIncentivesPoolId
+} from '@acala-network/types/interfaces/types-lookup';
+
+type CurrencyId = AcalaPrimitivesCurrencyCurrencyId;
+type PoolId = ModuleIncentivesPoolId;
+type DexShare = AcalaPrimitivesCurrencyDexShare;
 
 async function findPriceOrCheckDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<number> {
-	const normal = await priceOf(formatCurrencyId(x));
+	const normal = await tickerPrice(formatCurrencyId(x));
 	if (normal > 0) {
 		return normal;
 	} else {
@@ -37,9 +45,10 @@ async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): P
 
 	// now get the price of `y`, then known token..
 	const MUL = 10000;
-	const yPrice = new BN((await priceOf(formatCurrencyId(y))) * MUL);
+	const yPrice = new BN((await tickerPrice(formatCurrencyId(y))) * MUL);
 	console.log(
-		`🎩 price of ${x.toString()} via ${y.toString()} is ${yTotal.mul(yPrice).div(xTotal).toNumber() / MUL
+		`🎩 price of ${x.toString()} via ${y.toString()} is ${
+			yTotal.mul(yPrice).div(xTotal).toNumber() / MUL
 		}`
 	);
 	const price = yTotal.mul(yPrice).div(xTotal).toNumber() / MUL;
@@ -50,8 +59,10 @@ async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): P
 async function dexLiquidityOf(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<[BN, BN]> {
 	let [yTotal, xTotal]: [BN, BN] = [new BN(0), new BN(0)];
 	try {
+		//@ts-ignore
 		[yTotal, xTotal] = await api.query.dex.liquidityPool([y.toHuman(), x.toHuman()]);
 	} catch {
+		//@ts-ignore
 		[xTotal, yTotal] = await api.query.dex.liquidityPool([x.toHuman(), y.toHuman()]);
 	}
 	return [xTotal, yTotal];
@@ -64,11 +75,7 @@ function formatCurrencyId(currencyId: CurrencyId): string {
 		return `LP ${formatCurrencyId(p0)}-${formatCurrencyId(p1)}`;
 	} else if (currencyId.isForeignAsset) {
 		return `foreignAsset${currencyId.asForeignAsset}`;
-	} else if (currencyId.isLiquidCroadloan) {
-		return `LC-${currencyId.asLiquidCroadloan}`;
-		//@ts-ignore
 	} else if (currencyId.isLiquidCrowdloan) {
-		//@ts-ignore
 		return `LC-${currencyId.asLiquidCrowdloan}`;
 	} else if (currencyId.isToken) {
 		return `${currencyId.asToken.toString()}`;
@@ -77,7 +84,7 @@ function formatCurrencyId(currencyId: CurrencyId): string {
 	}
 }
 
-function formatDexShare(share: DexShare): string {
+function formatDexShare(share: AcalaPrimitivesCurrencyDexShare): string {
 	if (share.isToken) {
 		return share.asToken.toString();
 	} else if (share.isErc20) {
@@ -97,7 +104,7 @@ function poolToTokenName(pool: PoolId): string {
 	}
 }
 
-function poolToName(pool: PoolId): string {
+function poolToName(pool: ModuleIncentivesPoolId): string {
 	if (pool.isDex) {
 		return formatCurrencyId(pool.asDex);
 	} else if (pool.isLoans) {
@@ -115,7 +122,7 @@ async function processToken(
 ): Promise<Asset | undefined> {
 	if (token.isToken) {
 		const tokenName = token.asToken.toString();
-		const knownToken = api.createType('CurrencyId', { Token: api.registry.chainTokens[0] });
+		const knownToken = { Token: api.registry.chainTokens[0] } as unknown as CurrencyId;
 		const price = await findPriceOrCheckDex(api, token, knownToken);
 		const decimals = findDecimals(api, tokenName);
 		return new Asset({
@@ -123,7 +130,7 @@ async function processToken(
 			decimals,
 			name: formatCurrencyId(token),
 			price,
-			token_name: tokenName,
+			ticker: tokenName,
 			transferrable: true,
 			origin
 		});
@@ -131,13 +138,14 @@ async function processToken(
 		const assetMetadata = (
 			await api.query.assetRegistry.assetMetadatas({ ForeignAssetId: token.asForeignAsset })
 		).unwrap();
-		const price = await priceOf(assetMetadata.toHuman().name.toLowerCase());
+		const ticker = assetMetadata.toHuman().name?.toString().toLowerCase() || 'XXX';
+		const price = await tickerPrice(ticker);
 		return new Asset({
 			amount: accountData.free,
 			decimals: new BN(assetMetadata.decimals),
 			name: formatCurrencyId(token),
 			price,
-			token_name: assetMetadata.toHuman().name,
+			ticker,
 			transferrable: true,
 			origin
 		});
@@ -146,105 +154,127 @@ async function processToken(
 	}
 }
 
-export async function fetch_reward_pools(
-	api: ApiPromise,
-	account: string,
-	chain: string
-): Promise<Asset[]> {
-	api.registerTypes(types);
-	const assets: Asset[] = [];
+export class AcalaLPTokens extends Account32ValueBearing implements IValueBearing {
+	identifiers: string[];
 
-	const allPoolIds: PoolId[] = (await api.query.rewards.poolInfos.entries()).map(
-		([key, value]) => key.args[0]
-	);
-	for (const poolId of allPoolIds) {
-		const [amount, rewardsMap] = await api.query.rewards.sharesAndWithdrawnRewards(poolId, account);
-		if (!amount.isZero()) {
-			const poolName = poolToName(poolId);
-			const poolTokenName = poolToTokenName(poolId);
+	constructor() {
+		super();
+		this.identifiers = [];
+	}
 
-			// if this is an LP pool, we register each individual asset independently as well. note
-			// that we also register the LP token, which will always have a value of zero.
-			if (poolId.isDex && poolId.asDex.isDexShare) {
-				const p0: CurrencyId = poolId.asDex.asDexShare[0] as CurrencyId;
-				const p1: CurrencyId = poolId.asDex.asDexShare[1] as CurrencyId;
+	async extract(chain: IChain, account: string): Promise<Asset[]> {
+		const { api, name: chainName } = chain;
+		api.registerTypes(types);
+		const assets: Asset[] = [];
 
-				const poolTotalShares = (await api.query.rewards.poolInfos(poolId)).totalShares;
+		const allPoolIds = (await api.query.rewards.poolInfos.entries()).map(
+			([key, value]) => key.args[0]
+		);
+		for (const poolId of allPoolIds) {
+			const [amount, rewardsMap] = await api.query.rewards.sharesAndWithdrawnRewards(
+				poolId,
+				account
+			);
 
-				let poolCurrentShares;
-				try {
-					poolCurrentShares = await api.query.dex.liquidityPool([p0.toHuman(), p1.toHuman()]);
-				} catch {
-					poolCurrentShares = await api.query.dex.liquidityPool([p1.toHuman(), p0.toHuman()]);
+			if (!amount.isZero()) {
+				const poolName = poolToName(poolId);
+				const poolTokenName = poolToTokenName(poolId);
+
+				// if this is an LP pool, we register each individual asset independently as well. note
+				// that we also register the LP token, which will always have a value of zero.
+				if (poolId.isDex && poolId.asDex.isDexShare) {
+					const p0: CurrencyId = poolId.asDex.asDexShare[0] as CurrencyId;
+					const p1: CurrencyId = poolId.asDex.asDexShare[1] as CurrencyId;
+
+					//@ts-ignore
+					const pool = (await api.query.rewards.poolInfos(poolId)) as PoolInfo;
+					const poolTotalShares = pool.totalShares;
+
+					let poolCurrentShares;
+					try {
+						poolCurrentShares = await api.query.dex.liquidityPool([p0.toHuman(), p1.toHuman()]);
+					} catch {
+						poolCurrentShares = await api.query.dex.liquidityPool([p1.toHuman(), p0.toHuman()]);
+					}
+					//@ts-ignore
+					const p0Amount = poolCurrentShares[0].mul(amount).div(poolTotalShares);
+					//@ts-ignore
+					const p1Amount = poolCurrentShares[1].mul(amount).div(poolTotalShares);
+
+					// wacky, but works: we use the chain's main token as a swappable token in the dex.
+					const knownToken = { Token: api.registry.chainTokens[0] } as unknown as CurrencyId;
+					const p0Name = formatCurrencyId(p0);
+					const p1Name = formatCurrencyId(p1);
+
+					assets.push(
+						new Asset({
+							amount: p0Amount,
+							decimals: findDecimals(api, p0Name),
+							name: `[LP-derived] ${p0Name}`,
+							ticker: p0Name,
+							price: await findPriceOrCheckDex(api, p0, knownToken),
+							transferrable: false,
+							origin: { account, chain: chainName, source: 'reward pools pallet' }
+						})
+					);
+
+					assets.push(
+						new Asset({
+							amount: p1Amount,
+							decimals: findDecimals(api, p1Name),
+							name: `[LP-derived] ${p1Name}`,
+							ticker: p1Name,
+							price: await findPriceOrCheckDex(api, p1, knownToken),
+							transferrable: false,
+							origin: { account, chain: chainName, source: 'reward pools pallet' }
+						})
+					);
 				}
-				const p0Amount = poolCurrentShares[0].mul(amount).div(poolTotalShares);
-				const p1Amount = poolCurrentShares[1].mul(amount).div(poolTotalShares);
-
-				// wacky, but works: we use the chain's main token as a swappable token in the dex.
-				const knownToken = api.createType('CurrencyId', { Token: api.registry.chainTokens[0] });
-				const p0Name = formatCurrencyId(p0);
-				const p1Name = formatCurrencyId(p1);
 
 				assets.push(
 					new Asset({
-						amount: p0Amount,
-						decimals: findDecimals(api, p0Name),
-						name: `[LP-derived] ${p0Name}`,
-						token_name: p0Name,
-						price: await findPriceOrCheckDex(api, p0, knownToken),
+						amount,
+						decimals: findDecimals(api, poolTokenName),
+						name: poolName,
+						ticker: poolTokenName,
+						price: await tickerPrice(poolTokenName),
 						transferrable: false,
-						origin: { account, chain, source: 'reward pools pallet' }
-					})
-				);
-
-				assets.push(
-					new Asset({
-						amount: p1Amount,
-						decimals: findDecimals(api, p1Name),
-						name: `[LP-derived] ${p1Name}`,
-						token_name: p1Name,
-						price: await findPriceOrCheckDex(api, p1, knownToken),
-						transferrable: false,
-						origin: { account, chain, source: 'reward pools pallet' }
+						origin: { account, chain: chainName, source: 'reward pools pallet' }
 					})
 				);
 			}
-
-			assets.push(
-				new Asset({
-					amount,
-					decimals: findDecimals(api, poolTokenName),
-					name: poolName,
-					token_name: poolTokenName,
-					price: await priceOf(poolTokenName),
-					transferrable: false,
-					origin: { account, chain, source: 'reward pools pallet' }
-				})
-			);
 		}
-	}
 
-	return assets;
+		return assets;
+	}
 }
 
-export async function fetch_tokens(
-	api: ApiPromise,
-	account: string,
-	chain: string
-): Promise<Asset[]> {
-	api.registerTypes(types);
-	const assets: Asset[] = [];
-	const origin: AssetOrigin = { account, chain, source: 'tokens pallet' };
-	const entries = await api.query.tokens.accounts.entries(account);
+export class AcalaTokens extends Account32ValueBearing implements IValueBearing {
+	identifiers: string[];
 
-	for (const [key, token_data_raw] of entries) {
-		const token = key.args[1];
-		const tokenData = api.createType('OrmlAccountData', token_data_raw);
-		const maybeAsset = await processToken(api, token, tokenData, origin);
-		if (maybeAsset) {
-			assets.push(maybeAsset);
-		}
+	constructor() {
+		super();
+		this.identifiers = ['tokens'];
 	}
 
-	return assets;
+	async extract(chain: IChain, account: string): Promise<Asset[]> {
+		const { api, name: chainName } = chain;
+		api.registerTypes(types);
+
+		const assets: Asset[] = [];
+		const origin: AssetOrigin = { account, chain: chainName, source: 'tokens pallet' };
+		const entries = await api.query.tokens.accounts.entries(account);
+
+		for (const [key, token_data_raw] of entries) {
+			const token = key.args[1];
+			const tokenData = api.createType('OrmlAccountData', token_data_raw);
+			//@ts-ignore
+			const maybeAsset = await processToken(api, token, tokenData, origin);
+			if (maybeAsset) {
+				assets.push(maybeAsset);
+			}
+		}
+
+		return assets;
+	}
 }

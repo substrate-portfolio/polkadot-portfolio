@@ -9,7 +9,7 @@ export class MoonbeamCrowdloanRewards implements IValueBearing {
 
 	constructor() {
 		this.addressLength = 20;
-		this.identifiers = ["crowdloanRewards"];
+		this.identifiers = ['crowdloanRewards'];
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
@@ -24,7 +24,7 @@ export class MoonbeamCrowdloanRewards implements IValueBearing {
 		const locked = total.sub(claimed);
 
 		if (locked.isZero()) {
-			return []
+			return [];
 		}
 
 		const decimals = new BN(api.registry.chainDecimals[0]);

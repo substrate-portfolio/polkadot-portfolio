@@ -543,10 +543,7 @@ export const prodRelayKusama: EndpointOption = {
 		'light client': 'light://substrate-connect/kusama'
 	},
 	teleport: [1000, 1001],
-	linked: [
-		...prodParasKusamaCommon,
-		...prodParasKusama
-	]
+	linked: [...prodParasKusamaCommon, ...prodParasKusama]
 };
 
 export const prodParasPolkadot: EndpointOption[] = [
@@ -898,10 +895,7 @@ export const prodRelayPolkadot: EndpointOption = {
 		'light client': 'light://substrate-connect/polkadot'
 	},
 	teleport: [1000],
-	linked: [
-		...prodParasPolkadotCommon,
-		...prodParasPolkadot
-	]
+	linked: [...prodParasPolkadotCommon, ...prodParasPolkadot]
 };
 
 export const prodChains: EndpointOption[] = [
@@ -1212,4 +1206,3 @@ export const prodChains: EndpointOption[] = [
 		}
 	}
 ];
-

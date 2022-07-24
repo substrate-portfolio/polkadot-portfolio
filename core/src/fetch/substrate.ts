@@ -15,8 +15,8 @@ export class System extends Account32ValueBearing implements IValueBearing {
 	identifiers: string[];
 
 	constructor() {
-		super()
-		this.identifiers = ["system"];
+		super();
+		this.identifiers = ['system'];
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
@@ -25,29 +25,32 @@ export class System extends Account32ValueBearing implements IValueBearing {
 		const accountData = await chain.api.query.system.account(account);
 		const decimals = new BN(chain.api.registry.chainDecimals[0]);
 
-
-		let assets: Asset[] = [];
+		const assets: Asset[] = [];
 		if (!accountData.data.free.isZero()) {
-			assets.push(new Asset({
-				name: `free_${ticker}`,
-				ticker,
-				price,
-				transferrable: true,
-				amount: accountData.data.free || new BN(0),
-				decimals,
-				origin: { account, chain: chain.name, source: 'system pallet' }
-			}))
+			assets.push(
+				new Asset({
+					name: `free_${ticker}`,
+					ticker,
+					price,
+					transferrable: true,
+					amount: accountData.data.free || new BN(0),
+					decimals,
+					origin: { account, chain: chain.name, source: 'system pallet' }
+				})
+			);
 		}
 		if (!accountData.data.reserved.isZero()) {
-			assets.push(new Asset({
-				name: `reserved_${ticker}`,
-				ticker,
-				price,
-				transferrable: false,
-				amount: accountData.data.reserved || new BN(0),
-				decimals,
-				origin: { account, chain: chain.name, source: 'system pallet' }
-			}))
+			assets.push(
+				new Asset({
+					name: `reserved_${ticker}`,
+					ticker,
+					price,
+					transferrable: false,
+					amount: accountData.data.reserved || new BN(0),
+					decimals,
+					origin: { account, chain: chain.name, source: 'system pallet' }
+				})
+			);
 		}
 		return assets;
 	}
@@ -57,8 +60,8 @@ export class ParachainCrowdloan extends Account32ValueBearing implements IValueB
 	identifiers: string[];
 
 	constructor() {
-		super()
-		this.identifiers = ["paras", "crowdloan"];
+		super();
+		this.identifiers = ['paras', 'crowdloan'];
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
@@ -101,8 +104,8 @@ export class Assets extends Account32ValueBearing implements IValueBearing {
 	identifiers: string[];
 
 	constructor() {
-		super()
-		this.identifiers = ["assets"];
+		super();
+		this.identifiers = ['assets'];
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
@@ -110,10 +113,7 @@ export class Assets extends Account32ValueBearing implements IValueBearing {
 		const assets: Asset[] = [];
 		const allAssetIds = (await api.query.assets.asset.entries()).map((a) => a[0].args[0]);
 		const fetchAssetsPromise = allAssetIds.map(async (assetId) => {
-			const assetAccount = await api.query.assets.account(
-				assetId,
-				account
-			);
+			const assetAccount = await api.query.assets.account(assetId, account);
 			if (assetAccount.isSome && !assetAccount.unwrap().balance.isZero()) {
 				const meta = await api.query.assets.metadata(assetId);
 				const decimals = new BN(meta.decimals);

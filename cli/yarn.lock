@@ -2666,7 +2666,7 @@
   "resolved" "https://registry.npmjs.org/pify/-/pify-4.0.1.tgz"
   "version" "4.0.1"
 
-"polkadot-portfolio-core@file:../core":
+"polkadot-portfolio-core@../core":
   "resolved" "file:../core"
   "version" "0.1.1"
   dependencies:

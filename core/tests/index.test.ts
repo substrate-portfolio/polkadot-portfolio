@@ -17,7 +17,6 @@ describe('scrape', () => {
 	test('should fetch acala tokens', async () => {
 		const api = await makeApi('wss://karura.api.onfinality.io/public-ws');
 		const assets = await scrape('HL8bEp8YicBdrUmJocCAWVLKUaR2dd1y6jnD934pbre3un1', api);
-		console.log(assets);
 		expect(assets.length).toBeGreaterThan(1);
 	});
 });

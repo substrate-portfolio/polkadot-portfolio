@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import classNames from 'classnames';
 import { useCallback, useContext } from 'react';
 import { AppContext } from '../../store';
+import AccountIcon from '../AccountIcon';
 
 const AccountsList = () => {
 	const { state, actions } = useContext(AppContext);
@@ -31,7 +32,10 @@ const AccountsList = () => {
 					<div
 						className="flex items-center py-2 rounded-md hover:bg-slate-50 mb-2 last:mb-0"
 						key={`${index}_${account.name}`}>
-						<div className="flex-1">{account.name}</div>
+						<div className="flex-1 flex items-center">
+							<AccountIcon address={account.id} size={18} />
+							<span className="ml-2">{account.name}</span>
+						</div>
 
 						<div className="inline-flex items-center">
 							<div

@@ -3,6 +3,7 @@ import { useCallback, useContext, useMemo, useState } from 'react';
 import { AppContext } from '../../store';
 import { SharedStyles } from '../../utils/styles';
 import ModalBox from '../ModalBox';
+import { isAddress } from 'polkadot-portfolio-core';
 
 const AccountListSettings = () => {
 	const { actions } = useContext(AppContext);
@@ -10,7 +11,12 @@ const AccountListSettings = () => {
 	const [name, setNameInput] = useState('');
 	const [stash, setIdInput] = useState('');
 
-	const disabled = useMemo(() => !(name.length > 1 && stash.length > 1), [name, stash]);
+	const disabled = useMemo(() => {
+		const lengthCondition = name.length > 1 && stash.length > 1;
+		const addressCondition = stash.length > 0 ? isAddress(stash) : false;
+
+		return !(lengthCondition && addressCondition);
+	}, [name, stash]);
 
 	const addAccountToList = useCallback(async () => {
 		if (disabled) return;

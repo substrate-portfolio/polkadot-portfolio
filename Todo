@@ -5,7 +5,8 @@ UI:
   - Networks and Accounts:
     [] Auto complete for networks: We should have a list of hardcoded networks (copy pasta from polkadot.js/apps), and upon adding a new network, you should be able to just type “Polkadot” and it should potentially suggest a known ws endpoint for it.
     [] Networks should have icons (hardcoded)
-    [] Accounts should have icon as well (https://github.com/polkadot-js/ui/tree/master/packages/react-identicon#readme).
+    [x] Accounts should have icon as well (https://github.com/polkadot-js/ui/tree/master/packages/react-identicon#readme)
+		[x] Validate accounts on input 
 
   - Actions on Token Table:
     [] Filtering small amounts

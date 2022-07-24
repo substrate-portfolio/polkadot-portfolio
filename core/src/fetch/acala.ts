@@ -14,7 +14,6 @@ import {
 
 type CurrencyId = AcalaPrimitivesCurrencyCurrencyId;
 type PoolId = ModuleIncentivesPoolId;
-type DexShare = AcalaPrimitivesCurrencyDexShare;
 
 async function findPriceOrCheckDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): Promise<number> {
 	const normal = await tickerPrice(formatCurrencyId(x));
@@ -47,8 +46,7 @@ async function findPriceViaDex(api: ApiPromise, x: CurrencyId, y: CurrencyId): P
 	const MUL = 10000;
 	const yPrice = new BN((await tickerPrice(formatCurrencyId(y))) * MUL);
 	console.log(
-		`🎩 price of ${x.toString()} via ${y.toString()} is ${
-			yTotal.mul(yPrice).div(xTotal).toNumber() / MUL
+		`🎩 price of ${x.toString()} via ${y.toString()} is ${yTotal.mul(yPrice).div(xTotal).toNumber() / MUL
 		}`
 	);
 	const price = yTotal.mul(yPrice).div(xTotal).toNumber() / MUL;
@@ -122,7 +120,8 @@ async function processToken(
 ): Promise<Asset | undefined> {
 	if (token.isToken) {
 		const tokenName = token.asToken.toString();
-		const knownToken = { Token: api.registry.chainTokens[0] } as unknown as CurrencyId;
+		const knownToken = api.createType('CurrencyId', { Token: api.registry.chainTokens[0] });
+		// @ts-ignore
 		const price = await findPriceOrCheckDex(api, token, knownToken);
 		const decimals = findDecimals(api, tokenName);
 		return new Asset({
@@ -202,7 +201,7 @@ export class AcalaLPTokens extends Account32ValueBearing implements IValueBearin
 					const p1Amount = poolCurrentShares[1].mul(amount).div(poolTotalShares);
 
 					// wacky, but works: we use the chain's main token as a swappable token in the dex.
-					const knownToken = { Token: api.registry.chainTokens[0] } as unknown as CurrencyId;
+					const knownToken = api.createType('CurrencyId', { Token: api.registry.chainTokens[0] });
 					const p0Name = formatCurrencyId(p0);
 					const p1Name = formatCurrencyId(p1);
 
@@ -212,6 +211,7 @@ export class AcalaLPTokens extends Account32ValueBearing implements IValueBearin
 							decimals: findDecimals(api, p0Name),
 							name: `[LP-derived] ${p0Name}`,
 							ticker: p0Name,
+							// @ts-ignore
 							price: await findPriceOrCheckDex(api, p0, knownToken),
 							transferrable: false,
 							origin: { account, chain: chainName, source: 'reward pools pallet' }
@@ -224,6 +224,7 @@ export class AcalaLPTokens extends Account32ValueBearing implements IValueBearin
 							decimals: findDecimals(api, p1Name),
 							name: `[LP-derived] ${p1Name}`,
 							ticker: p1Name,
+							// @ts-ignore
 							price: await findPriceOrCheckDex(api, p1, knownToken),
 							transferrable: false,
 							origin: { account, chain: chainName, source: 'reward pools pallet' }

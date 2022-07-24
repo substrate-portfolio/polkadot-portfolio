@@ -27,5 +27,6 @@
 		"outDir": "build",
 		"declarationMap": false,
 		"skipLibCheck": true
-	}
+	},
+	"exclude": ["**/*.test.ts", "jest.config.js"],
 }

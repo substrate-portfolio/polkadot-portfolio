@@ -158,7 +158,7 @@ export class AcalaLPTokens extends Account32ValueBearing implements IValueBearin
 
 	constructor() {
 		super();
-		this.identifiers = [];
+		this.identifiers = ['rewards', 'dex'];
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {

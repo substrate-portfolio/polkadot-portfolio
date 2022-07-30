@@ -11,7 +11,7 @@ const useSyncNetworks = (useTrigger: TriggerRefresh) => {
 	const { addApiRegistry, setLoading } = actions;
 
 	const connect = async (networkUri: string): Promise<ApiPromise> => {
-		const api = await makeApi(networkUri);
+		const { api } = await makeApi(networkUri);
 		return api;
 	};
 

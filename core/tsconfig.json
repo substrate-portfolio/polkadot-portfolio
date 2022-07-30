@@ -28,5 +28,5 @@
 		"declarationMap": false,
 		"skipLibCheck": true
 	},
-	"exclude": ["**/*.test.ts", "jest.config.js"],
+	"exclude": ["**/*.test.ts", "*.js", "build", "jest.config.js"],
 }

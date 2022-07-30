@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { tickerPrice, scrape, Asset, ApiPromise, makeApi } from 'polkadot-portfolio-core';
-import * as BN from "bn.js";
+import * as BN from 'bn.js';
 import * as currencyFormatter from 'currency-formatter';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -16,7 +16,6 @@ const optionsPromise = yargs(hideBin(process.argv)).option('accounts', {
 	description: 'path to a JSON file with your accounts in it.',
 	required: true
 }).argv;
-
 
 interface AssetAndRatio {
 	asset: Asset;
@@ -68,9 +67,9 @@ class Summary {
 			.sort((a, b) => a[1].ratio - b[1].ratio)
 			.reverse();
 		for (const [_, { asset: sum_asset, ratio }] of sorted) {
-			ret += `🎁 sum of ${sum_asset.ticker}: ${formatAmount(sum_asset)}, ${(
-				ratio * 100
-			).toFixed(2)}% of total [unit price = ${sum_asset.price}].\n`;
+			ret += `🎁 sum of ${sum_asset.ticker}: ${formatAmount(sum_asset)}, ${(ratio * 100).toFixed(
+				2
+			)}% of total [unit price = ${sum_asset.price}].\n`;
 		}
 		ret += `💰 total EUR value: ${currencyFormatter.format(this.total_eur_value, {
 			locale: 'nl-NL'
@@ -79,11 +78,10 @@ class Summary {
 	}
 }
 
-
-
 function formatAmount(asset: Asset): string {
 	const formatNumber = (x: BN) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-	const token_amount = `${formatNumber(asset.decimal())}.${asset.fraction()
+	const token_amount = `${formatNumber(asset.decimal())}.${asset
+		.fraction()
 		.toString()
 		.padStart(3, '0')}`;
 	const eur_amount = asset.euroValue();
@@ -91,7 +89,9 @@ function formatAmount(asset: Asset): string {
 }
 
 function stringifyAsset(asset: Asset): string {
-	return `[${asset.transferrable ? '🍺' : '🔐'}][${asset.ticker}] ${asset.name}: ${formatAmount(asset)}`;
+	return `[${asset.transferrable ? '🍺' : '🔐'}][${asset.ticker}] ${asset.name}: ${formatAmount(
+		asset
+	)}`;
 }
 
 export async function main() {
@@ -103,14 +103,11 @@ export async function main() {
 	// connect to all api endpoints.
 	await Promise.all(
 		accountConfig.networks.map(async (uri: string) => {
-			const api = await makeApi(uri);
+			const { api } = await makeApi(uri);
 			apiRegistry.set(uri, api);
 			console.log(
-				`✅ Connected to ${uri} / decimals: ${api.registry.chainDecimals.toString()} / tokens ${api.registry.chainTokens
-				} / [ss58: ${api.registry.chainSS58}]`
+				`⛓ Connected to ${uri} / tokens ${api.registry.chainTokens} / [ss58: ${api.registry.chainSS58}]`
 			);
-			// this will just cache everything.
-			const _price = await tickerPrice(api.registry.chainTokens[0]);
 			apiRegistry.set(uri, api);
 		})
 	);
@@ -118,21 +115,18 @@ export async function main() {
 	let allAssets: Asset[] = [];
 	for (const networkWs of accountConfig.networks) {
 		const api = apiRegistry.get(networkWs)!;
-		(
-			await Promise.all(
-				accountConfig.stashes.map(([account, name]) => {
-					return scrape(account, api);
-				})
-			)
-		).forEach((accountAssets) => (allAssets = allAssets.concat(accountAssets)));
+		for (const [account] of accountConfig.stashes) {
+			const accountAssets = await scrape(account, api);
+			allAssets = allAssets.concat(accountAssets);
+		}
 	}
 
 	accountConfig.stashes.forEach(([account, name]) => {
 		const accountAssets = allAssets.filter((a) => a.origin.account === account);
 		console.log(`#########`);
 		console.log(`# Summary of ${account} / ${name}:`);
-		for (let asset of accountAssets) {
-			console.log(stringifyAsset(asset))
+		for (const asset of accountAssets) {
+			console.log(stringifyAsset(asset));
 		}
 		console.log(`#########`);
 	});
@@ -143,8 +137,8 @@ export async function main() {
 		const chainAssets = allAssets.filter((a) => a.origin.chain === chain);
 		console.log(`#########`);
 		console.log(`# Summary of chain ${chain}:`);
-		for (let asset of chainAssets) {
-			console.log(stringifyAsset(asset))
+		for (const asset of chainAssets) {
+			console.log(stringifyAsset(asset));
 		}
 		console.log(`#########`);
 	}

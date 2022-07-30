@@ -1,5 +1,6 @@
 import BN from 'bn.js';
 import { IValueBearing, IChain } from '.';
+import { Ecosystem, paraIdToName } from '../endpoints';
 import { Asset } from '../types';
 import { tickerPrice } from '../utils';
 
@@ -66,12 +67,13 @@ export class ParachainCrowdloan extends Account32ValueBearing implements IValueB
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
 		const { api, name: chainName } = chain;
+		// assumption: this pallet only lives on the relay chains.
+		const ecosystem = chainName.toLowerCase() == 'polkadot' ? Ecosystem.Polkadot : Ecosystem.Kusama;
 		const ticker = api.registry.chainTokens[0];
 		const price = await tickerPrice(ticker);
 		const accountHex = api.createType('AccountId', account).toHex();
 		const decimals = new BN(api.registry.chainDecimals[0]);
-		// @ts-ignore
-		const allParaIds: ParaId[] = (await api.query.paras.paraLifecycles.entries()).map(
+		const allParaIds: any[] = (await api.query.paras.paraLifecycles.entries()).map(
 			([key, _]) => key.args[0]
 		);
 		const assets: Asset[] = [];
@@ -81,7 +83,7 @@ export class ParachainCrowdloan extends Account32ValueBearing implements IValueB
 				const contribution_amount = contribution[accountHex];
 				if (!contribution_amount.isZero()) {
 					const asset = new Asset({
-						name: `crowdloan_${id}`,
+						name: `crowdloan_${id}_${paraIdToName(Number(id), ecosystem)}`,
 						ticker,
 						price,
 						transferrable: false,

@@ -3,7 +3,7 @@ UI:
     [] Live coin data
 
   - Networks and Accounts:
-    [] Auto complete for networks: We should have a list of hardcoded networks (copy pasta from polkadot.js/apps), and upon adding a new network, you should be able to just type “Polkadot” and it should potentially suggest a known ws endpoint for it.
+    [x] Auto complete for networks: We should have a list of hardcoded networks (copy pasta from polkadot.js/apps), and upon adding a new network, you should be able to just type “Polkadot” and it should potentially suggest a known ws endpoint for it.
     [] Networks should have icons (hardcoded)
     [x] Accounts should have icon as well (https://github.com/polkadot-js/ui/tree/master/packages/react-identicon#readme)
 		[x] Validate accounts on input 
@@ -17,6 +17,10 @@ UI:
 
   - [ ] UI Network Preludes: ALL, DOTSama, Polkadot, Kusama
   - [ ] Account Import from Extensions
+
+	BUGS: 
+		- [] Loading is not accurate yet. It hides before fetching finishes.
+		- [] On networks add/remove all assets sometimes doesn't load up.
 
 CORE:
   [] Provide API to fetch coins data from various sources and keep them up to date

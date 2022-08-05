@@ -40,10 +40,13 @@ const removeAccount = (state: StoreState, accountId: string): StoreState => {
 	};
 };
 
-const addNetwork = (state: StoreState, network: string): StoreState => ({
-	...state,
-	networks: [...state.networks, network]
-});
+const addNetwork = (state: StoreState, network: string): StoreState => {
+	if (state.networks.includes(network)) return state;
+	return {
+		...state,
+		networks: [...state.networks, network]
+	};
+};
 
 const removeNetwork = (state: StoreState, network: string): StoreState => ({
 	...state,

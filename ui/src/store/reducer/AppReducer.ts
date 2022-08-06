@@ -18,10 +18,13 @@ export interface IAction {
 	payload: any;
 }
 
-const addAccount = (state: StoreState, payload: IAccount): StoreState => ({
-	...state,
-	accounts: [...state.accounts, payload]
-});
+const addAccount = (state: StoreState, payload: IAccount): StoreState => {
+	if (state.accounts.some((item) => item.id === payload.id)) return state;
+	return {
+		...state,
+		accounts: [...state.accounts, payload]
+	};
+};
 
 const removeAccount = (state: StoreState, accountId: string): StoreState => {
 	const {

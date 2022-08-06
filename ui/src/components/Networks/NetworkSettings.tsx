@@ -1,9 +1,11 @@
 import classNames from 'classnames';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FAddNetwork } from '../../store/store';
 import { SharedStyles as styles } from '../../utils/styles';
 import { validateWebsocketUrls } from '../../utils/validators';
 import ModalBox from '../ModalBox';
+import ManualNetwork from './ManualNetworkInput';
+import NetworkLookup from './NetworkLookup';
 
 export interface AddNetworkProps {
 	addNetwork: FAddNetwork;
@@ -12,6 +14,7 @@ export interface AddNetworkProps {
 const NetworksSetting = ({ addNetwork }: AddNetworkProps) => {
 	const [validNetwork, setValidNetworkState] = useState(false);
 	const [networkInput, setNetworkInput] = useState('');
+	const [manualMode, setManualMode] = useState(false);
 
 	const addNetworkToList = useCallback(async () => {
 		if (!validNetwork) return;
@@ -19,35 +22,47 @@ const NetworksSetting = ({ addNetwork }: AddNetworkProps) => {
 		setNetworkInput('');
 	}, [addNetwork, networkInput, validNetwork]);
 
-	const handleInput = useCallback(({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
-		const isValid = validateWebsocketUrls(value);
-		setValidNetworkState(isValid);
-		setNetworkInput(value);
+	const toggleManualNetwork = useCallback(() => {
+		setManualMode((prev) => !prev);
 	}, []);
+
+	useEffect(() => {
+		const isValid = validateWebsocketUrls(networkInput);
+		setValidNetworkState(isValid);
+	}, [networkInput]);
+
+	const toggleButtonText = useMemo(
+		() => (!manualMode ? 'Enter URL Manually' : 'Search Networks'),
+		[manualMode]
+	);
 
 	return (
 		<ModalBox title="Add Network">
-			<p className="pt-2 px-2 pb-4">Add your network WSS address.</p>
-			<input
-				value={networkInput}
-				name="networkInput"
-				className={classNames(styles.input.default, {
-					[styles.input.invalid]: !validNetwork && networkInput.length
-				})}
-				placeholder="Network url"
-				onChange={handleInput}
-			/>
-			{!validNetwork && networkInput.length ? (
-				<p className="pt-2 px-2 pb-1 text-red-500">Please enter a valid web socket address.</p>
-			) : null}
-			<button
-				disabled={!validNetwork}
-				className={classNames(styles.button.default, {
-					[styles.button.disabled]: !validNetwork
-				})}
-				onClick={addNetworkToList}>
-				Add and Connect
-			</button>
+			{manualMode ? (
+				<ManualNetwork
+					networkInput={networkInput}
+					setNetworkInput={setNetworkInput}
+					validNetwork={validNetwork}
+					setValidNetworkState={setValidNetworkState}
+				/>
+			) : (
+				<NetworkLookup setNetworkInput={setNetworkInput} />
+			)}
+			<div className="flex mt-4 border-t border-t-gray-100">
+				<div
+					className="text-center text-gray-600 hover:text-gray-800 cursor-pointer py-2 px-4 w-full mt-2 mr-2"
+					onClick={toggleManualNetwork}>
+					{toggleButtonText}
+				</div>
+				<button
+					disabled={!validNetwork}
+					className={classNames(styles.button.default, {
+						[styles.button.disabled]: !validNetwork
+					})}
+					onClick={addNetworkToList}>
+					Add and Connect
+				</button>
+			</div>
 		</ModalBox>
 	);
 };

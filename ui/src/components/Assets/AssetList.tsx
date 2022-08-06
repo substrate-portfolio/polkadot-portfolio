@@ -4,6 +4,7 @@ import { Asset, currencyFormat, ApiPromise } from 'polkadot-portfolio-core';
 import { AssetGroups, tableHeads } from '../../utils/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleUp, faAngleDown } from '@fortawesome/free-solid-svg-icons';
+import classNames from 'classnames';
 
 interface AssetListProps {
 	assets: Asset[];
@@ -23,7 +24,7 @@ const styles = {
 		'flex-1 w-full p-2 font-bold cursor-pointer hover:bg-gray-50 inline-flex items-center justify-between',
 	emptyBox: 'px-4 py-4 text-lg text-center',
 	row: 'flex justify-between w-full hover:bg-gray-50 border-b',
-	col: 'flex-1 w-full p-2',
+	col: 'flex-1 w-full p-2 text-ellipsis overflow-hidden',
 	tableBody: 'flex justify-between w-full border-b-2'
 };
 
@@ -35,6 +36,9 @@ export const AssetItem = ({ asset, accounts, apiRegistry }: AssetItemProps) => {
 
 	return (
 		<div className={styles.row}>
+			<span className={classNames(styles.col, 'whitespace-nowrap')} title={asset.name}>
+				{asset.name}
+			</span>
 			<span className={styles.col}>{asset.ticker}</span>
 			<span className={styles.col}>{accountName}</span>
 			<span className={styles.col}>{asset.origin.chain}</span>
@@ -52,6 +56,9 @@ const sortTable =
 	(a: Asset, b: Asset): number => {
 		let orderNumber: number;
 		switch (sortOrder) {
+			case AssetGroups.Name:
+				orderNumber = b.name.localeCompare(a.name);
+				break;
 			case AssetGroups.Token:
 				orderNumber = b.ticker.localeCompare(a.ticker);
 				break;

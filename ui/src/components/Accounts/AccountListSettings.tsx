@@ -4,14 +4,7 @@ import { AppContext } from '../../store';
 import { SharedStyles } from '../../utils/styles';
 import ModalBox from '../ModalBox';
 import { isAddress } from 'polkadot-portfolio-core';
-import {
-	web3Accounts,
-	web3Enable,
-	web3FromAddress,
-	web3ListRpcProviders,
-	web3UseRpcProvider
-} from '@polkadot/extension-dapp';
-import { addSyntheticLeadingComment } from 'typescript';
+import { web3Accounts, web3Enable } from '@polkadot/extension-dapp';
 
 const AccountListSettings = () => {
 	const { actions } = useContext(AppContext);
@@ -22,7 +15,7 @@ const AccountListSettings = () => {
 	const [injectedAccounts, setInjectedAccounts] = useState<{ address: string; name: string }[]>([]);
 
 	const updatedInjectedAccounts = async () => {
-		const allInjected = await web3Enable('portfolio');
+		const _ = await web3Enable('portfolio');
 		const allAccounts = (await web3Accounts()).map((acc) => {
 			return {
 				address: acc.address,
@@ -59,8 +52,6 @@ const AccountListSettings = () => {
 	}, []);
 
 	useEffect(() => {
-		// You need to restrict it at some point
-		// This is just dummy code and should be replaced by actual
 		if (injectedAccounts.length === 0) {
 			updatedInjectedAccounts();
 		}
@@ -68,16 +59,30 @@ const AccountListSettings = () => {
 
 	return (
 		<ModalBox title="Add New Account">
-			<h2> Extension Account </h2>
-			<ul>
+			<p className="text-lg font-bold"> Extension Account </p>
+			<button
+				type="button"
+				className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+				Select All
+			</button>
+			<ul className="list-disc">
 				{injectedAccounts.map(({ address, name }) => (
 					<li key={address}>
-						{address} / {name} / <button> Add </button>
+						<input type="checkbox" className="accent-green-500"></input>
+						{address} / {name}
 					</li>
 				))}
 			</ul>
-			<hr />
-			<h2> Custom Account </h2>
+			<button
+				disabled={disabled}
+				className={classNames(SharedStyles.button.default, {
+					[SharedStyles.button.disabled]: disabled
+				})}
+				onClick={addAccountToList}>
+				Add Extension Accounts
+			</button>
+			<br className="border-100" />
+			<p className="text-lg font-bold"> Custom Account </p>
 			<div className="flex flex-col flex-1">
 				<input
 					value={name}

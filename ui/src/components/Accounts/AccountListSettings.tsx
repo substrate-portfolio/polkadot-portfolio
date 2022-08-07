@@ -1,15 +1,36 @@
 import classNames from 'classnames';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AppContext } from '../../store';
 import { SharedStyles } from '../../utils/styles';
 import ModalBox from '../ModalBox';
 import { isAddress } from 'polkadot-portfolio-core';
+import {
+	web3Accounts,
+	web3Enable,
+	web3FromAddress,
+	web3ListRpcProviders,
+	web3UseRpcProvider
+} from '@polkadot/extension-dapp';
+import { addSyntheticLeadingComment } from 'typescript';
 
 const AccountListSettings = () => {
 	const { actions } = useContext(AppContext);
 	const { addAccount } = actions;
 	const [name, setNameInput] = useState('');
 	const [stash, setIdInput] = useState('');
+
+	const [injectedAccounts, setInjectedAccounts] = useState<{ address: string; name: string }[]>([]);
+
+	const updatedInjectedAccounts = async () => {
+		const allInjected = await web3Enable('portfolio');
+		const allAccounts = (await web3Accounts()).map((acc) => {
+			return {
+				address: acc.address,
+				name: acc.meta.name || 'unknown'
+			};
+		});
+		setInjectedAccounts(allAccounts);
+	};
 
 	const disabled = useMemo(() => {
 		const lengthCondition = name.length > 1 && stash.length > 1;
@@ -37,8 +58,26 @@ const AccountListSettings = () => {
 		setNameInput(event.target.value);
 	}, []);
 
+	useEffect(() => {
+		// You need to restrict it at some point
+		// This is just dummy code and should be replaced by actual
+		if (injectedAccounts.length === 0) {
+			updatedInjectedAccounts();
+		}
+	}, []);
+
 	return (
 		<ModalBox title="Add New Account">
+			<h2> Extension Account </h2>
+			<ul>
+				{injectedAccounts.map(({ address, name }) => (
+					<li key={address}>
+						{address} / {name} / <button> Add </button>
+					</li>
+				))}
+			</ul>
+			<hr />
+			<h2> Custom Account </h2>
 			<div className="flex flex-col flex-1">
 				<input
 					value={name}

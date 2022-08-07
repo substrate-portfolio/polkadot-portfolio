@@ -1,7 +1,7 @@
 import '@polkadot/api-augment';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Asset } from '../types';
-import { Assets, System, ParachainCrowdloan } from './substrate';
+import { Assets, System, ParachainCrowdloan, NominationPools } from './substrate';
 import { MoonbeamCrowdloanRewards } from './moonbeam';
 import { tickerPrice } from '../utils';
 import { AcalaLPTokens, AcalaTokens } from './acala';
@@ -47,6 +47,7 @@ export async function scrape(account: string, api: ApiPromise): Promise<Asset[]>
 		new System(),
 		new Assets(),
 		new ParachainCrowdloan(),
+		new NominationPools(),
 		new MoonbeamCrowdloanRewards(),
 		new AcalaTokens(),
 		new AcalaLPTokens()

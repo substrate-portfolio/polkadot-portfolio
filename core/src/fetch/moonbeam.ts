@@ -30,7 +30,7 @@ export class MoonbeamCrowdloanRewards implements IValueBearing {
 		const decimals = new BN(api.registry.chainDecimals[0]);
 		return [
 			new Asset({
-				name: `crowdloan vested ${ticker}`,
+				name: `vested ${ticker}`,
 				ticker,
 				price,
 				transferrable: false,

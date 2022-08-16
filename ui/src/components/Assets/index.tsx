@@ -5,6 +5,15 @@ import { IVisibility } from '../../store/store';
 import { Asset, currencyFormat } from 'polkadot-portfolio-core';
 import { AssetGroups, tableHeads } from '../../utils/constants';
 import { AssetList } from './AssetList';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons';
+
+const GroupableAssets = [
+	AssetGroups.Account,
+	AssetGroups.Chain,
+	AssetGroups.Source,
+	AssetGroups.Token
+];
 
 const filterVisibility =
 	(visibility: IVisibility) =>
@@ -28,10 +37,19 @@ const Assets = () => {
 	}, [filteredAssets]);
 
 	const [groupBy, setGroupBy] = useState<AssetGroups | null>(null);
-	// const groupAssetsBy = useCallback((gb: AssetGroups | null) => () => {
-	//   if(groupBy === gb) setGroupBy(null)
-	//   else setGroupBy(gb)
-	// }, [groupBy])
+	const groupAssetsBy = useCallback(
+		(gb: AssetGroups | null) => () => {
+			if (!(gb && GroupableAssets.includes(gb))) return;
+			if (groupBy === gb) setGroupBy(null);
+			else setGroupBy(gb);
+		},
+		[groupBy]
+	);
+
+	const groupHeads = useMemo(
+		() => tableHeads.filter((item) => GroupableAssets.includes(item.assetGroup)),
+		[tableHeads]
+	);
 
 	return (
 		<div>
@@ -43,22 +61,28 @@ const Assets = () => {
 							<span className="mr-4">{totalAssetValuesInAllChains}</span>
 						</div>
 					</div>
-					{/* <div className='inline-flex items-center justify-between'>
-            <div className='selects'>
-              <div>Group Assets:</div>
-              <div>
-                {tableHeads.map((item, index) => (
-                  <span
-                    className={classNames('cursor-pointer mr-2 hover:text-cyan-800', {
-                      'text-cyan-800': groupBy === item.assetGroup
-                    })}
-                    key={'th_group__' + index} onClick={groupAssetsBy(item.assetGroup)}>
-                    {item.title}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div> */}
+					<div className="inline-flex items-center justify-between">
+						<div className="flex items-center">
+							<div className="mr-2" title="Group assets by">
+								<FontAwesomeIcon icon={faLayerGroup} />
+							</div>
+							<div>
+								{groupHeads.map((item, index) => (
+									<span
+										className={classNames(
+											'inline-block rounded-xl py-1 px-2 border border-transparent cursor-pointer mr-2 hover:text-cyan-800 hover:border-cyan-700',
+											{
+												'text-cyan-800 border-cyan-800': groupBy === item.assetGroup
+											}
+										)}
+										key={'th_group__' + index}
+										onClick={groupAssetsBy(item.assetGroup)}>
+										{item.title}
+									</span>
+								))}
+							</div>
+						</div>
+					</div>
 				</div>
 				<div>
 					<AssetList

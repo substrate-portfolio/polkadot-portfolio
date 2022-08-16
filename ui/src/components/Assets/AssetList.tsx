@@ -132,10 +132,9 @@ const groupAssetsBy = (assets: Asset[], assetGroup: AssetGroups): GroupedAsset[]
 	return groupAssets(assets, selector, assetGroup);
 };
 
-export const AssetList = ({ assets, accounts, apiRegistry }: AssetListProps) => {
+export const AssetList = ({ assets, accounts, apiRegistry, groupBy }: AssetListProps) => {
 	const [sortOrder, setSortOrder] = useState<AssetGroups>(AssetGroups.Value);
 	const [asc, setAsc] = useState<boolean>(false);
-	const [groupBy, setGroupBy] = useState<AssetGroups>(AssetGroups.Token);
 	const filteredAssets = useMemo(() => {
 		return assets.filter(filterZeroAmount).sort(sortTable(sortOrder, asc));
 	}, [assets, sortOrder, asc]);
@@ -152,8 +151,10 @@ export const AssetList = ({ assets, accounts, apiRegistry }: AssetListProps) => 
 	);
 
 	useEffect(() => {
-		const groupedAssets = groupAssetsBy(filteredAssets, groupBy);
-		console.log(groupedAssets);
+		if (groupBy) {
+			const groupedAssets = groupAssetsBy(filteredAssets, groupBy);
+			console.log(groupedAssets);
+		}
 	}, [groupBy, filteredAssets, groupAssetsBy]);
 
 	if (filteredAssets.length <= 0)
@@ -161,7 +162,7 @@ export const AssetList = ({ assets, accounts, apiRegistry }: AssetListProps) => 
 
 	return (
 		<div>
-			<div className={styles.tableBody}>
+			<div className={classNames('bg-white sticky top-0', styles.tableBody)}>
 				{tableHeads.map((th, index) => (
 					<span
 						key={`${index}__${th.title.toLowerCase()}`}

@@ -2,10 +2,12 @@ import { IValueBearing, IChain } from '.';
 import { Ecosystem, paraIdToName } from '../endpoints';
 import { Asset } from '../types';
 import { tickerPrice } from '../utils';
-import { u128 } from '@polkadot/types';
+import { u32, u128 } from '@polkadot/types';
 import { ApiPromise } from '@polkadot/api';
-import { AccountId32 } from '@open-web3/orml-types/interfaces';
+import { AccountId32, FixedU128 } from '@open-web3/orml-types/interfaces';
 import { BN, bnToU8a, stringToU8a, u8aConcat } from '@polkadot/util';
+import { PalletNominationPoolsRewardPool } from '@polkadot/types/lookup';
+import { memberExpression } from '@babel/types';
 
 export class Account32ValueBearing {
 	addressLength: number;
@@ -145,10 +147,12 @@ export class Assets extends Account32ValueBearing implements IValueBearing {
 
 export class NominationPools extends Account32ValueBearing implements IValueBearing {
 	identifiers: string[];
+	rewardCounterBase: number;
 
 	constructor() {
 		super();
 		this.identifiers = ['nominationPools'];
+		this.rewardCounterBase = 1_000_000_000_000_000_000;
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
@@ -218,9 +222,65 @@ export class NominationPools extends Account32ValueBearing implements IValueBear
 					})
 				);
 			}
+
+			// get any pending rewards
+			const rewardPool = (await api.query.nominationPools.rewardPools(member.poolId)).unwrap();
+			console.log(rewardPool.toHuman());
+			const currentRewardCounter = await this.currentRewardCounter(
+				api,
+				member.poolId,
+				bondedPool.points,
+				rewardPool
+			);
+			const pendingReward =
+				(currentRewardCounter -
+					member.lastRecordedRewardCounter.toNumber() / this.rewardCounterBase) *
+				member.points;
+
+			if (pendingReward !== 0) {
+				assets.push(
+					new Asset({
+						ticker,
+						name: `Pool Pending Reward`,
+						price,
+						transferrable: false,
+						amount: new BN(pendingReward),
+						decimals,
+						origin: { account, chain: chainName, source: 'nomination pools pallet' }
+					})
+				);
+			}
 		}
 
 		return assets;
+	}
+
+	async currentRewardCounter(
+		api: ApiPromise,
+		id: u32,
+		bondedPoints: u128,
+		rewardPool: PalletNominationPoolsRewardPool
+	): Promise<number> {
+		// https://github.com/paritytech/substrate/blob/4c83ee0a406939f1393d19f87675e1fbc49e328d/frame/nomination-pools/src/lib.rs#L968
+		const rewardAccount = this.createAccount(
+			api,
+			api.consts.nominationPools.palletId.toU8a(),
+			id,
+			1
+		);
+		const existentialDeposit = api.consts.balances.existentialDeposit;
+		const balance = (await api.query.system.account(rewardAccount)).data.free.sub(
+			existentialDeposit
+		);
+		const payoutSinceLastRecord = balance
+			.add(new BN(rewardPool.totalRewardsClaimed))
+			.sub(new BN(rewardPool.lastRecordedTotalPayouts));
+
+		// we know that the RC in all chains is fixedu128, which has a base of
+		return (
+			payoutSinceLastRecord.toNumber() / bondedPoints.toNumber() +
+			rewardPool.lastRecordedRewardCounter.toNumber() / this.rewardCounterBase
+		);
 	}
 
 	createAccount(api: ApiPromise, palletId: Uint8Array, poolId: BN, index: number): AccountId32 {

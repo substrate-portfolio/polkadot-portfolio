@@ -1,9 +1,10 @@
 {
 	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "vscode.typescript-language-features",
+	"editor.defaultFormatter": "dbaeumer.vscode-eslint",
 	"editor.tabSize": 2,
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false,
+
 	"workbench.colorCustomizations": {
 		"activityBar.activeBackground": "#f7dcca",
 		"activityBar.activeBorder": "#19a652",
@@ -21,7 +22,11 @@
 		"titleBar.activeBackground": "#f1bf9d",
 		"titleBar.activeForeground": "#15202b",
 		"titleBar.inactiveBackground": "#f1bf9d99",
-		"titleBar.inactiveForeground": "#15202b99"
+		"titleBar.inactiveForeground": "#15202b99",
+		"commandCenter.border": "#15202b99"
 	},
-	"peacock.color": "#f1bf9d"
+	"peacock.color": "#f1bf9d",
+	"[typescript]": {
+		"editor.defaultFormatter": "vscode.typescript-language-features"
+	},
 }

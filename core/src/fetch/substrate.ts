@@ -147,12 +147,12 @@ export class Assets extends Account32ValueBearing implements IValueBearing {
 
 export class NominationPools extends Account32ValueBearing implements IValueBearing {
 	identifiers: string[];
-	rewardCounterBase: number;
+	rewardCounterBase: BN;
 
 	constructor() {
 		super();
 		this.identifiers = ['nominationPools'];
-		this.rewardCounterBase = 1_000_000_000_000_000_000;
+		this.rewardCounterBase = new BN(10).pow(new BN(18));
 	}
 
 	async extract(chain: IChain, account: string): Promise<Asset[]> {
@@ -165,7 +165,6 @@ export class NominationPools extends Account32ValueBearing implements IValueBear
 			const decimals = new BN(chain.api.registry.chainDecimals[0]);
 
 			const member = maybeMember.unwrap();
-			const points = member.points;
 			const bondedPool = (await api.query.nominationPools.bondedPools(member.poolId)).unwrap();
 
 			const pointsToBalance = async (points: BN): Promise<BN> => {
@@ -182,7 +181,7 @@ export class NominationPools extends Account32ValueBearing implements IValueBear
 			};
 
 			// get the bonded amount
-			const amount = await pointsToBalance(points);
+			const amount = await pointsToBalance(member.points);
 			assets.push(
 				new Asset({
 					ticker,
@@ -225,26 +224,25 @@ export class NominationPools extends Account32ValueBearing implements IValueBear
 
 			// get any pending rewards
 			const rewardPool = (await api.query.nominationPools.rewardPools(member.poolId)).unwrap();
-			console.log(rewardPool.toHuman());
 			const currentRewardCounter = await this.currentRewardCounter(
 				api,
 				member.poolId,
 				bondedPool.points,
 				rewardPool
 			);
-			const pendingReward =
-				(currentRewardCounter -
-					member.lastRecordedRewardCounter.toNumber() / this.rewardCounterBase) *
-				member.points;
+			const pendingReward = currentRewardCounter
+				.sub(member.lastRecordedRewardCounter)
+				.mul(member.points)
+				.div(this.rewardCounterBase);
 
-			if (pendingReward !== 0) {
+			if (!pendingReward.isZero()) {
 				assets.push(
 					new Asset({
 						ticker,
 						name: `Pool Pending Reward`,
 						price,
 						transferrable: false,
-						amount: new BN(pendingReward),
+						amount: pendingReward,
 						decimals,
 						origin: { account, chain: chainName, source: 'nomination pools pallet' }
 					})
@@ -260,7 +258,7 @@ export class NominationPools extends Account32ValueBearing implements IValueBear
 		id: u32,
 		bondedPoints: u128,
 		rewardPool: PalletNominationPoolsRewardPool
-	): Promise<number> {
+	): Promise<BN> {
 		// https://github.com/paritytech/substrate/blob/4c83ee0a406939f1393d19f87675e1fbc49e328d/frame/nomination-pools/src/lib.rs#L968
 		const rewardAccount = this.createAccount(
 			api,
@@ -276,11 +274,10 @@ export class NominationPools extends Account32ValueBearing implements IValueBear
 			.add(new BN(rewardPool.totalRewardsClaimed))
 			.sub(new BN(rewardPool.lastRecordedTotalPayouts));
 
-		// we know that the RC in all chains is fixedu128, which has a base of
-		return (
-			payoutSinceLastRecord.toNumber() / bondedPoints.toNumber() +
-			rewardPool.lastRecordedRewardCounter.toNumber() / this.rewardCounterBase
-		);
+		return payoutSinceLastRecord
+			.mul(this.rewardCounterBase)
+			.div(bondedPoints)
+			.add(rewardPool.lastRecordedRewardCounter);
 	}
 
 	createAccount(api: ApiPromise, palletId: Uint8Array, poolId: BN, index: number): AccountId32 {

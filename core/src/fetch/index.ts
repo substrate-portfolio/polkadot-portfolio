@@ -63,10 +63,10 @@ export async function scrape(account: string, api: ApiPromise): Promise<Asset[]>
 				const moduleAssets = await mod.extract({ api, name: chain }, account);
 				assets = assets.concat(moduleAssets);
 			} catch (e) {
-				// console.warn(
-				// 	`error while fetching ${mod.identifiers} for ${account} in chain ${chain}:`,
-				// 	e
-				// );
+				console.warn(
+					`error while fetching ${mod.identifiers} for ${account} in chain ${chain}:`,
+					e
+				);
 				// throw(e)
 			}
 		}

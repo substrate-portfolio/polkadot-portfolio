@@ -1,7 +1,0 @@
-{
-	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "vscode.typescript-language-features",
-	"editor.tabSize": 2,
-	"editor.insertSpaces": false,
-	"editor.detectIndentation": false
-}

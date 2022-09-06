@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IAccount } from '../../store/store';
 import { Asset, currencyFormat, ApiPromise } from 'polkadot-portfolio-core';
 import { AssetGroups, tableHeads } from '../../utils/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleUp, faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import classNames from 'classnames';
+import GroupedAsset from './GroupedAsset';
 
 interface AssetListProps {
 	assets: Asset[];
@@ -84,30 +85,58 @@ const sortTable =
 	};
 
 // TODO: IT WAS BIGGER THAN I INITIALLY THOUGHT, GOING TO IMPLEMENT IT LATER.
-// const groupAssetsBy = (assetGroup: AssetGroups) => (sum: Asset[], asset: Asset, index: number): Asset[] => {
-//   switch (assetGroup) {
-//     case AssetGroups.Token:
-//       break;
-//     case AssetGroups.Account:
-//       break;
-//     case AssetGroups.Chain:
-//       break;
-//     case AssetGroups.Source:
-//       break;
-//     case AssetGroups.Amount:
-//       break;
-//     case AssetGroups.Value:
-//       break;
-//   }
-// }
+const makeGroups = (assetGroups: { [key: string]: Asset[] }, type: AssetGroups): GroupedAsset[] => {
+	return Object.entries(assetGroups).reduce((groups, [identifier, groupAssets]) => {
+		const groupItem = new GroupedAsset(groupAssets, identifier, type);
+		return [...groups, groupItem];
+	}, [] as GroupedAsset[]);
+};
 
-export const AssetList = ({ assets, accounts, apiRegistry }: AssetListProps) => {
+const groupAssets = (
+	assets: Asset[],
+	selector: (asset: Asset) => string,
+	type: AssetGroups
+): GroupedAsset[] => {
+	const reduced = assets.reduce((assets, currentAsset) => {
+		const identifier = selector(currentAsset);
+		return {
+			...assets,
+			[identifier]: [...(assets[identifier] ?? []), currentAsset]
+		};
+	}, {} as { [key: string]: Asset[] });
+
+	return makeGroups(reduced, type);
+};
+
+const groupAssetsBy = (assets: Asset[], assetGroup: AssetGroups): GroupedAsset[] => {
+	let selector = (_: Asset) => '';
+	let noop = false;
+	switch (assetGroup) {
+		case AssetGroups.Token:
+			selector = (asset: Asset) => asset.ticker;
+			break;
+		case AssetGroups.Account:
+			selector = (asset: Asset) => asset.origin.account;
+			break;
+		case AssetGroups.Chain:
+			selector = (asset: Asset) => asset.origin.chain;
+			break;
+		case AssetGroups.Source:
+			selector = (asset: Asset) => asset.origin.source;
+			break;
+		default:
+			noop = true;
+			break;
+	}
+	if (noop) return [];
+	return groupAssets(assets, selector, assetGroup);
+};
+
+export const AssetList = ({ assets, accounts, apiRegistry, groupBy }: AssetListProps) => {
 	const [sortOrder, setSortOrder] = useState<AssetGroups>(AssetGroups.Value);
 	const [asc, setAsc] = useState<boolean>(false);
 	const filteredAssets = useMemo(() => {
 		return assets.filter(filterZeroAmount).sort(sortTable(sortOrder, asc));
-		// if(!groupBy) return sortedAndFiltered;
-		// return sortedAndFiltered.reduce(groupAssetsBy(groupBy), [])
 	}, [assets, sortOrder, asc]);
 
 	const updateSortOrder = useCallback(
@@ -121,12 +150,19 @@ export const AssetList = ({ assets, accounts, apiRegistry }: AssetListProps) => 
 		[sortOrder]
 	);
 
+	useEffect(() => {
+		if (groupBy) {
+			const groupedAssets = groupAssetsBy(filteredAssets, groupBy);
+			console.log(groupedAssets);
+		}
+	}, [groupBy, filteredAssets, groupAssetsBy]);
+
 	if (filteredAssets.length <= 0)
 		return <div className={styles.emptyBox}>No Valued Asset found</div>;
 
 	return (
 		<div>
-			<div className={styles.tableBody}>
+			<div className={classNames('bg-white sticky top-0', styles.tableBody)}>
 				{tableHeads.map((th, index) => (
 					<span
 						key={`${index}__${th.title.toLowerCase()}`}

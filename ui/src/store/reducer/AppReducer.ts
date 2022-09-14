@@ -1,5 +1,6 @@
 import { IAccount, LoadingScope, StoreState } from '../store';
 import { Asset, ApiPromise } from 'polkadot-portfolio-core';
+import AccountIcon from '../../components/AccountIcon';
 
 export enum ActionTypes {
 	AddNetwork = 'AddNetwork',
@@ -10,7 +11,8 @@ export enum ActionTypes {
 	AddRegistry = 'AddRegistry',
 	RemoveRegistry = 'RemoveRegistry',
 	SetAssets = 'SetAssets',
-	ChangeVisibility = 'ChangeVisibility'
+	ChangeVisibility = 'ChangeVisibility',
+	GetAccounts = 'GetAccounts'
 }
 
 export interface IAction {

@@ -44,6 +44,7 @@ export interface IActionList {
 	removeApiRegistry: FRemoveApiRegistry;
 	setAssets: FSetAssets;
 	changeVisibility: FChangeVisibility;
+	getAccounts: FGetAccounts;
 }
 
 export type FAddNetwork = (network: string) => void;
@@ -55,3 +56,4 @@ export type FAddApiRegistry = (network: string, registry: ApiPromise) => void;
 export type FRemoveApiRegistry = (network: string) => void;
 export type FSetAssets = (assets: Asset[]) => void;
 export type FChangeVisibility = (account?: string | null, network?: string | null) => void;
+export type FGetAccounts = () => string[];

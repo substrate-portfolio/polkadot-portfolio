@@ -3,23 +3,38 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AppContext } from '../../store';
 import { SharedStyles } from '../../utils/styles';
 import ModalBox from '../ModalBox';
-import { isAddress } from 'polkadot-portfolio-core';
+import { ApiPromise, isAddress } from 'polkadot-portfolio-core';
 import { web3Accounts, web3Enable } from '@polkadot/extension-dapp';
+import { add } from 'lodash';
 
 const AccountListSettings = () => {
-	const { actions } = useContext(AppContext);
-	const { addAccount } = actions;
+	const { state, actions } = useContext(AppContext);
+	const { addAccount, getAccounts } = actions;
+
 	const [name, setNameInput] = useState('');
 	const [stash, setIdInput] = useState('');
-
-	const [injectedAccounts, setInjectedAccounts] = useState<{ address: string; name: string }[]>([]);
+	const [injectedAccounts, setInjectedAccounts] = useState<
+		{ address: string; name: string; duplicate: boolean }[]
+	>([]);
 
 	const updatedInjectedAccounts = async () => {
 		const _ = await web3Enable('portfolio');
+		const alreadyAdded = getAccounts();
+		const apis = Array.from(state.apiRegistry.values());
+		const isDuplicate = (x: string, known: string[]): boolean => {
+			if (apis.length > 0) {
+				const api: ApiPromise = apis[0] as ApiPromise;
+				const encoded = api.createType('AccountId', x).toU8a();
+				return known.some((y) => api.createType('AccountId', y).eq(encoded));
+			} else {
+				return false;
+			}
+		};
 		const allAccounts = (await web3Accounts()).map((acc) => {
 			return {
 				address: acc.address,
-				name: acc.meta.name || 'unknown'
+				name: acc.meta.name || 'unknown',
+				duplicate: isDuplicate(acc.address, alreadyAdded)
 			};
 		});
 		setInjectedAccounts(allAccounts);
@@ -39,9 +54,12 @@ const AccountListSettings = () => {
 			id: stash
 		});
 		setNameInput('');
-
 		setIdInput('');
 	}, [addAccount, name, stash, disabled]);
+
+	const addInjectedAccountToList = (name: string, id: string) => {
+		addAccount({ name, id });
+	};
 
 	const handleStash = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
 		setIdInput(event.target.value);
@@ -60,16 +78,17 @@ const AccountListSettings = () => {
 	return (
 		<ModalBox title="Add New Account">
 			<p className="text-lg font-bold"> Extension Account </p>
-			<button
-				type="button"
-				className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-				Select All
-			</button>
 			<ul className="list-disc">
-				{injectedAccounts.map(({ address, name }) => (
+				{injectedAccounts.map(({ address, name, duplicate }) => (
 					<li key={address}>
-						<input type="checkbox" className="accent-green-500"></input>
-						{address} / {name}
+						{address} /{name} /
+						<button
+							type="button"
+							disabled={duplicate}
+							onClick={() => addInjectedAccountToList(name, address)}
+							className="inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight rounded-full shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">
+							{duplicate ? 'already added!' : 'add'}
+						</button>
 					</li>
 				))}
 			</ul>

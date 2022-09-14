@@ -6,6 +6,7 @@ import {
 	FAddApiRegistry,
 	FAddNetwork,
 	FChangeVisibility,
+	FGetAccounts,
 	FRemoveApiRegistry,
 	FRemoveNetwork,
 	FSetAssets,
@@ -19,14 +20,14 @@ import {
 const INITIAL_NETWORKS = [
 	'wss://kusama-rpc.polkadot.io',
 	'wss://rpc.polkadot.io',
-	'wss://statemine-rpc.polkadot.io',
 	'wss://karura-rpc-0.aca-api.network',
 	'wss://acala-polkadot.api.onfinality.io/public-ws',
-	'wss://khala-api.phala.network/ws',
-	'wss://rpc.astar.network',
-	'wss://rpc.parallel.fi',
 	'wss://wss.api.moonbeam.network',
 	'wss://wss.moonriver.moonbeam.network'
+	// 'wss://statemine-rpc.polkadot.io',
+	// 'wss://khala-api.phala.network/ws',
+	// 'wss://rpc.astar.network',
+	// 'wss://rpc.parallel.fi'
 ];
 
 const NETWORK_KEY = 'networks';
@@ -136,6 +137,10 @@ export const AppContextProvider = ({ children }: { children: any }) => {
 		});
 	};
 
+	const getAccounts: FGetAccounts = () => {
+		return state.accounts.map((x) => x.id);
+	};
+
 	const actions = {
 		addNetwork,
 		removeNetwork,
@@ -145,7 +150,8 @@ export const AppContextProvider = ({ children }: { children: any }) => {
 		addApiRegistry,
 		removeApiRegistry,
 		setAssets,
-		changeVisibility
+		changeVisibility,
+		getAccounts
 	} as IActionList;
 
 	const context = {
